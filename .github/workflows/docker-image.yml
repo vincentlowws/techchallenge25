@@ -1,0 +1,68 @@
+name: Build and Push Docker Images
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v2
+
+      #- name: Debug - List Files
+      #  run: ls -R
+        
+      # Build Client Image
+      - name: Build Client Docker Image
+        run: |
+          docker build -t my-client-app:latest -f ./mapbox-plane-tracker/client/Dockerfile ./mapbox-plane-tracker/client
+
+      # Build Server Image
+      - name: Build Server Docker Image
+        run: |
+          docker build -t my-server-app:latest -f ./mapbox-plane-tracker/server/Dockerfile ./mapbox-plane-tracker/server
+
+  push-to-ecr:
+    needs: build
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v2
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ secrets.AWS_REGION }}
+
+      - name: Log in to Amazon ECR
+        run: |
+          aws ecr get-login-password --region ${{ secrets.AWS_REGION }} | docker login --username AWS --password-stdin ${{ secrets.ECR_REPOSITORY_CLIENT }}
+          aws ecr get-login-password --region ${{ secrets.AWS_REGION }} | docker login --username AWS --password-stdin ${{ secrets.ECR_REPOSITORY_SERVER }}
+
+      - name: Tag Client Docker Image
+        run: |
+          docker tag my-client-app:latest ${{ secrets.ECR_REPOSITORY_CLIENT }}:latest
+
+      - name: Tag Server Docker Image
+        run: |
+          docker tag my-server-app:latest ${{ secrets.ECR_REPOSITORY_SERVER }}:latest
+
+      - name: Push Client Image to Amazon ECR
+        run: |
+          docker push ${{ secrets.ECR_REPOSITORY_CLIENT }}:latest
+
+      - name: Push Server Image to Amazon ECR
+        run: |
+          docker push ${{ secrets.ECR_REPOSITORY_SERVER }}:latest
