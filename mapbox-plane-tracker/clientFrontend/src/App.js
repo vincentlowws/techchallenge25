@@ -19,7 +19,7 @@ const App = () => {
   useEffect(() => {
     const fetchPlaneData = async () => {
       try {
-        const response = await axios.get("http://localhost:5000/api/plane");
+        const response = await axios.get("http://18.141.225.129:5000/api/plane");
         setPlaneData(response.data);
       } catch (error) {
         console.error("Error fetching plane data:", error);
