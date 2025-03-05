@@ -22,14 +22,14 @@ jobs:
         run: ls -R
         
       # Build Client Image
-      - name: Build Client Docker Image
-        run: |
-          docker build -t my-client-app:latest -f /mapbox-plane-tracker/clientFrontend/Dockerfile ./mapbox-plane-tracker/clientFrontend
+      #- name: Build Client Docker Image
+      #  run: |
+      #    docker build -t my-client-app:latest -f ./mapbox-plane-tracker/clientFrontend/Dockerfile ./mapbox-plane-tracker/clientFrontend
 
       # Build Server Image
       - name: Build Server Docker Image
         run: |
-          docker build -t my-server-app:latest -f /mapbox-plane-tracker/server/Dockerfile ./mapbox-plane-tracker/server
+          docker build -t my-server-app:latest -f "/server/Dockerfile" ./mapbox-plane-tracker/server
 
   push-to-ecr:
     needs: build
