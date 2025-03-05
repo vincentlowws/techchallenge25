@@ -35,8 +35,8 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v3
         
-      - name: Debug AWS Secrets
-        run: echo "AWS Region is ${{ secrets.AWS_REGION }}"
+      - name: Debug Docker Images
+        run: docker images
         
       - name: Configure AWS credentials
         uses: aws-actions/configure-aws-credentials@v2
