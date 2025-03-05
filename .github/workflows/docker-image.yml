@@ -41,27 +41,27 @@ jobs:
       - name: Configure AWS credentials
         uses: aws-actions/configure-aws-credentials@v2
         with:
-          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
-          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          aws-region: "ap-southeast-1"
+          aws-access-key-id: ${{ secrets.github.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.github.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ secrets.github.AWS_REGION }}
 
       - name: Log in to Amazon ECR
         run: |
-          aws ecr get-login-password --region ${{ secrets.AWS_REGION }} | docker login --username AWS --password-stdin ${{ secrets.ECR_REPOSITORY_CLIENT }}
-          aws ecr get-login-password --region ${{ secrets.AWS_REGION }} | docker login --username AWS --password-stdin ${{ secrets.ECR_REPOSITORY_SERVER }}
+          aws ecr get-login-password --region ${{ secrets.github.AWS_REGION }} | docker login --username AWS --password-stdin ${{ secrets.github.ECR_REPOSITORY_CLIENT }}
+          aws ecr get-login-password --region ${{ secrets.github.AWS_REGION }} | docker login --username AWS --password-stdin ${{ secrets.github.ECR_REPOSITORY_SERVER }}
 
       - name: Tag Client Docker Image
         run: |
-          docker tag my-client-app:latest ${{ secrets.ECR_REPOSITORY_CLIENT }}:latest
+          docker tag my-client-app:latest ${{ secrets.github.ECR_REPOSITORY_CLIENT }}:latest
 
       - name: Tag Server Docker Image
         run: |
-          docker tag my-server-app:latest ${{ secrets.ECR_REPOSITORY_SERVER }}:latest
+          docker tag my-server-app:latest ${{ secrets.github.ECR_REPOSITORY_SERVER }}:latest
 
       - name: Push Client Image to Amazon ECR
         run: |
-          docker push ${{ secrets.ECR_REPOSITORY_CLIENT }}:latest
+          docker push ${{ secrets.github.ECR_REPOSITORY_CLIENT }}:latest
 
       - name: Push Server Image to Amazon ECR
         run: |
-          docker push ${{ secrets.ECR_REPOSITORY_SERVER }}:latest
+          docker push ${{ secrets.github.ECR_REPOSITORY_SERVER }}:latest
