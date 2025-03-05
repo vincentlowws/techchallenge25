@@ -21,11 +21,11 @@ jobs:
       # Build Client Image
       - name: Build Client Docker Image
         run: |
-          docker build -t my-client-app:latest -f mapbox-plane-tracker/clientFrontend/Dockerfile mapbox-plane-tracker/clientFrontend
+          docker build -t tc_client:latest -f mapbox-plane-tracker/clientFrontend/Dockerfile mapbox-plane-tracker/clientFrontend
       # Build Server Image
       - name: Build Server Docker Image
         run: |
-          docker build -t my-server-app:latest -f mapbox-plane-tracker/server/Dockerfile mapbox-plane-tracker/server
+          docker build -t tc_server:latest -f mapbox-plane-tracker/server/Dockerfile mapbox-plane-tracker/server
 
   push-to-ecr:
     needs: build
@@ -52,11 +52,11 @@ jobs:
 
       - name: Tag Client Docker Image
         run: |
-          docker tag my-client-app:latest ${{ secrets.ECR_REPOSITORY_CLIENT }}:latest
+          docker tag tc_client:latest ${{ secrets.ECR_REPOSITORY_CLIENT }}:latest
 
       - name: Tag Server Docker Image
         run: |
-          docker tag my-server-app:latest ${{ secrets.ECR_REPOSITORY_SERVER }}:latest
+          docker tag tc_server:latest ${{ secrets.ECR_REPOSITORY_SERVER }}:latest
 
       - name: Push Client Image to Amazon ECR
         run: |
