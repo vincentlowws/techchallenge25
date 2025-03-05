@@ -1,0 +1,54 @@
+# Node.js dependencies
+node_modules/
+npm-debug.log
+yarn-error.log
+pnpm-debug.log
+
+# Environment variables
+.env
+.env.local
+.env.development
+.env.production
+.env.test
+
+# Logs
+logs/
+*.log
+yarn-debug.log*
+yarn-error.log*
+
+# Build files
+dist/
+build/
+.cache/
+.vscode/
+.DS_Store
+
+# OS-related files
+Thumbs.db
+Desktop.ini
+.DS_Store
+
+# Git-related
+.gitignore
+.gitkeep
+
+# Docker
+docker-compose.override.yml
+.dockerignore
+
+# Temporary files
+*.swp
+*.swo
+*.bak
+*.tmp
+
+# Editor-specific files
+.idea/
+.vscode/
+*.iml
+
+# AWS & Deployment
+.aws/
+terraform.tfstate*
+.terraform/
