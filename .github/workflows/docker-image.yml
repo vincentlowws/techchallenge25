@@ -6,7 +6,7 @@ on:
       - main
 
 jobs:
-  build:
+  build-and-push:
     runs-on: ubuntu-latest
 
     steps:
@@ -17,28 +17,7 @@ jobs:
 
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v2
-
-      #- name: Debug - List Files
-      #  run: ls -R
         
-      # Build Client Image
-      - name: Build Client Docker Image
-        run: |
-          docker build -t my-client-app:latest -f /clientFrontend/Dockerfile ./mapbox-plane-tracker/clientFrontend
-
-      # Build Server Image
-      - name: Build Server Docker Image
-        run: |
-          docker build -t my-server-app:latest -f /server/Dockerfile ./mapbox-plane-tracker/server
-
-  push-to-ecr:
-    needs: build
-    runs-on: ubuntu-latest
-
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v3
-
       - name: Configure AWS credentials
         uses: aws-actions/configure-aws-credentials@v2
         with:
@@ -51,13 +30,20 @@ jobs:
           aws ecr get-login-password --region ${{ secrets.AWS_REGION }} | docker login --username AWS --password-stdin ${{ secrets.ECR_REPOSITORY_CLIENT }}
           aws ecr get-login-password --region ${{ secrets.AWS_REGION }} | docker login --username AWS --password-stdin ${{ secrets.ECR_REPOSITORY_SERVER }}
 
-      - name: Tag Client Docker Image
+      # Build and Tag Client Image
+      - name: Build and Tag Client Docker Image
         run: |
-          docker tag my-client-app:latest ${{ secrets.ECR_REPOSITORY_CLIENT }}:latest
+          docker build -t tc_client:latest -f mapbox-plane-tracker/clientFrontend/Dockerfile mapbox-plane-tracker/clientFrontend
+          docker tag tc_client:latest ${{ secrets.ECR_REPOSITORY_CLIENT }}:latest
 
-      - name: Tag Server Docker Image
+      # Build and Tag Server Image
+      - name: Build and Tag Server Docker Image
         run: |
-          docker tag my-server-app:latest ${{ secrets.ECR_REPOSITORY_SERVER }}:latest
+          docker build -t tc_server:latest -f mapbox-plane-tracker/server/Dockerfile mapbox-plane-tracker/server
+          docker tag tc_server:latest ${{ secrets.ECR_REPOSITORY_SERVER }}:latest
+
+      - name: Debug Docker Images
+        run: docker images
 
       - name: Push Client Image to Amazon ECR
         run: |
