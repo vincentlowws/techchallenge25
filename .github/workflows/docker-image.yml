@@ -24,7 +24,7 @@ jobs:
       # Build Client Image
       - name: Build Client Docker Image
         run: |
-          docker build -t my-client-app:latest -f /client/Dockerfile ./mapbox-plane-tracker/client
+          docker build -t my-client-app:latest -f /clientFrontend/Dockerfile ./mapbox-plane-tracker/clientFrontend
 
       # Build Server Image
       - name: Build Server Docker Image
