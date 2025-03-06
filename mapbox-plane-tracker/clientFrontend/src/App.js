@@ -3,7 +3,8 @@ import mapboxgl from "mapbox-gl";
 import axios from "axios";
 import "mapbox-gl/dist/mapbox-gl.css";
 
-mapboxgl.accessToken = "pk.eyJ1IjoidG5lY25pdiIsImEiOiJjbDI1eG9hZGUwMDd5M2xwd3poOGI4dG53In0.C9Mw9x7e-QpHpD5gOuQ2Eg"; // Replace with your Mapbox token
+
+mapboxgl.accessToken = process.env.REACT_APP_MAPBOX_ACCESS_TOKEN;
 
 const App = () => {
   const mapRef = useRef(null);
@@ -119,8 +120,17 @@ const App = () => {
             markerRef.current.remove();
           }
 
+          // Create a plane icon element
+          const planeIcon = document.createElement("div");
+          planeIcon.className = "plane-icon";
+          planeIcon.innerHTML = `
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="24" height="24">
+              <path d="M22 16v-2l-8.5-5V3.5c0-.83-.67-1.5-1.5-1.5s-1.5.67-1.5 1.5V9L2 14v2l8.5-2.5V19l-2 1.5V22l3.5-1 3.5 1v-1.5L13.5 19v-5.5L22 16z"/>
+            </svg>
+          `;
+
           // Add a new marker for the plane
-          const marker = new mapboxgl.Marker({ color: "#FF0000" })
+          const marker = new mapboxgl.Marker(planeIcon)
             .setLngLat([
               flightRoute.waypoints[0].longitude,
               flightRoute.waypoints[0].latitude,
@@ -159,7 +169,7 @@ const App = () => {
             );
 
             // Simulate movement (adjust speed as needed)
-            const steps = 1000; // Number of steps between waypoints
+            const steps = 100; // Number of steps between waypoints
             const stepSizeLon = (nextWaypoint.longitude - currentWaypoint.longitude) / steps;
             const stepSizeLat = (nextWaypoint.latitude - currentWaypoint.latitude) / steps;
 

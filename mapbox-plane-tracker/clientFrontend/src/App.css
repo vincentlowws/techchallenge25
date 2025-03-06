@@ -36,3 +36,10 @@
     transform: rotate(360deg);
   }
 }
+
+.plane-icon {
+  width: 24px;
+  height: 24px;
+  fill: #007AFF; /* Blue color for the plane */
+  transform: rotate(45deg); /* Rotate the plane to face the direction of movement */
+}
