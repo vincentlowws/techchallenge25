@@ -18,7 +18,7 @@ const App = () => {
   useEffect(() => {
     const fetchFlightPlans = async () => {
       try {
-        const response = await axios.get("http://localhost:5000/api/flight-plans");
+        const response = await axios.get(process.env.REACT_APP_API_URL+"/api/flight-plans");
         setFlightPlans(response.data);
       } catch (error) {
         console.error("Error fetching flight plans:", error);
@@ -82,7 +82,7 @@ const App = () => {
       const fetchFlightRoute = async () => {
         try {
           const response = await axios.get(
-            `http://localhost:5000/api/flight-plan/${selectedFlight}`
+            process.env.REACT_APP_API_URL+`/api/flight-plan/${selectedFlight}`
           );
           const flightRoute = response.data;
 
@@ -153,7 +153,7 @@ const App = () => {
       const moveMarker = async () => {
         try {
           const response = await axios.get(
-            `http://localhost:5000/api/flight-plan/${selectedFlight}`
+            process.env.REACT_APP_API_URL+`/api/flight-plan/${selectedFlight}`
           );
           const flightRoute = response.data;
 
