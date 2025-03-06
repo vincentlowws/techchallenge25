@@ -1,34 +1,30 @@
 import React, { useEffect, useRef, useState } from "react";
 import mapboxgl from "mapbox-gl";
 import axios from "axios";
-import 'mapbox-gl/dist/mapbox-gl.css';
-import airportsData from "./airports.json";
+import "mapbox-gl/dist/mapbox-gl.css";
 
-mapboxgl.accessToken = "pk.eyJ1IjoidG5lY25pdiIsImEiOiJjbDI1eG9hZGUwMDd5M2xwd3poOGI4dG53In0.C9Mw9x7e-QpHpD5gOuQ2Eg";
+mapboxgl.accessToken = "pk.eyJ1IjoidG5lY25pdiIsImEiOiJjbDI1eG9hZGUwMDd5M2xwd3poOGI4dG53In0.C9Mw9x7e-QpHpD5gOuQ2Eg"; // Replace with your Mapbox token
 
 const App = () => {
   const mapRef = useRef(null);
   const markerRef = useRef(null);
-  const routeRef = useRef([]); // Stores trajectory points
-  const [planeData, setPlaneData] = useState({ lat: 37.7749, lon: -122.4194, alt: 10000, speed: 500, moving: false });
-  const [source, setSource] = useState({ lat: '', lon: '', name: '' });
-  const [destination, setDestination] = useState({ lat: '', lon: '', name: '' });
-  const [speed, setSpeed] = useState(500);
+  const [flightPlans, setFlightPlans] = useState([]);
+  const [selectedFlight, setSelectedFlight] = useState(null);
+  const [currentWaypointIndex, setCurrentWaypointIndex] = useState(0);
+  const [isMoving, setIsMoving] = useState(false);
 
-  // Fetch plane data continuously
+  // Fetch flight plans from the server
   useEffect(() => {
-    const fetchPlaneData = async () => {
+    const fetchFlightPlans = async () => {
       try {
-        const response = await axios.get("http://18.141.225.129:5000/api/plane");
-        setPlaneData(response.data);
+        const response = await axios.get("http://localhost:5000/api/flight-plans");
+        setFlightPlans(response.data);
       } catch (error) {
-        console.error("Error fetching plane data:", error);
+        console.error("Error fetching flight plans:", error);
       }
     };
 
-    fetchPlaneData();
-    const interval = setInterval(fetchPlaneData, 500); // Sync every 500ms
-    return () => clearInterval(interval);
+    fetchFlightPlans();
   }, []);
 
   // Initialize Mapbox map
@@ -37,21 +33,14 @@ const App = () => {
       const map = new mapboxgl.Map({
         container: "map",
         style: "mapbox://styles/mapbox/streets-v11",
-        center: [planeData.lon, planeData.lat], // Initial center
-        zoom: 3, // Zoom in closer
+        center: [103.8198, 1.3521], // Default to Singapore
+        zoom: 8,
       });
 
       map.on("load", () => {
         console.log("✅ Mapbox map loaded");
 
-        // Create a blue dot marker
-        const marker = new mapboxgl.Marker({ color: "#007AFF" })
-          .setLngLat([planeData.lon, planeData.lat])
-          .addTo(map);
-
-        markerRef.current = marker;
-
-        // Add an empty trajectory line
+        // Add an empty route source
         map.addSource("route", {
           type: "geojson",
           data: {
@@ -64,7 +53,7 @@ const App = () => {
           },
         });
 
-        // Add trajectory line as a **dotted grey line**
+        // Add route layer
         map.addLayer({
           id: "route",
           type: "line",
@@ -74,85 +63,146 @@ const App = () => {
             "line-cap": "round",
           },
           paint: {
-            "line-color": "#808080", // Grey color
+            "line-color": "#007AFF",
             "line-width": 2,
-            "line-dasharray": [2, 4], // Dotted line pattern
           },
         });
 
-        console.log("✅ Trajectory line added");
+        console.log("✅ Route layer added");
       });
 
       mapRef.current = map;
     }
   }, []);
 
-  // Update marker position & trajectory when planeData changes
+  // Update map when a flight plan is selected
   useEffect(() => {
-    if (mapRef.current && markerRef.current) {
-      console.log("✈️ Updating plane position:", planeData);
+    if (mapRef.current && selectedFlight) {
+      const fetchFlightRoute = async () => {
+        try {
+          const response = await axios.get(
+            `http://localhost:5000/api/flight-plan/${selectedFlight}`
+          );
+          const flightRoute = response.data;
 
-      // Move marker to new position
-      markerRef.current.setLngLat([planeData.lon, planeData.lat]);
-      mapRef.current.setCenter([planeData.lon, planeData.lat]); // Keep the map centered
+          // Update the route source
+          const routeSource = mapRef.current.getSource("route");
+          if (routeSource) {
+            routeSource.setData({
+              type: "Feature",
+              properties: {},
+              geometry: {
+                type: "LineString",
+                coordinates: flightRoute.waypoints.map((waypoint) => [
+                  waypoint.longitude,
+                  waypoint.latitude,
+                ]),
+              },
+            });
+          }
 
-      // Keep only the last 5 trajectory points
-      routeRef.current.push([planeData.lon, planeData.lat]);
-      if (routeRef.current.length > 15) {
-        routeRef.current.shift();
-      }
+          // Center the map on the first waypoint
+          if (flightRoute.waypoints.length > 0) {
+            mapRef.current.setCenter([
+              flightRoute.waypoints[0].longitude,
+              flightRoute.waypoints[0].latitude,
+            ]);
+            mapRef.current.setZoom(8);
+          }
 
-      // Update trajectory
-      const routeSource = mapRef.current.getSource("route");
-      if (routeSource) {
-        routeSource.setData({
-          type: "Feature",
-          properties: {},
-          geometry: {
-            type: "LineString",
-            coordinates: [...routeRef.current],
-          },
-        });
-      }
+          // Start moving the marker along the waypoints
+          setIsMoving(true);
+          setCurrentWaypointIndex(0);
+
+          // Remove existing markers
+          if (markerRef.current) {
+            markerRef.current.remove();
+          }
+
+          // Add a new marker for the plane
+          const marker = new mapboxgl.Marker({ color: "#FF0000" })
+            .setLngLat([
+              flightRoute.waypoints[0].longitude,
+              flightRoute.waypoints[0].latitude,
+            ])
+            .addTo(mapRef.current);
+
+          markerRef.current = marker;
+        } catch (error) {
+          console.error("Error fetching flight route:", error);
+        }
+      };
+
+      fetchFlightRoute();
     }
-  }, [planeData]);
+  }, [selectedFlight]);
 
-  const handleSubmit = async () => {
-    await axios.post("http://localhost:5000/api/start", {
-      lat: source.lat,
-      lon: source.lon,
-      alt: 10000,
-      speed,
-      destination: { lat: destination.lat, lon: destination.lon }
-    });
-  };
+  // Move the marker along the waypoints
+  useEffect(() => {
+    if (isMoving && selectedFlight) {
+      const moveMarker = async () => {
+        try {
+          const response = await axios.get(
+            `http://localhost:5000/api/flight-plan/${selectedFlight}`
+          );
+          const flightRoute = response.data;
+
+          if (currentWaypointIndex < flightRoute.waypoints.length - 1) {
+            const nextWaypointIndex = currentWaypointIndex + 1;
+            const currentWaypoint = flightRoute.waypoints[currentWaypointIndex];
+            const nextWaypoint = flightRoute.waypoints[nextWaypointIndex];
+
+            // Calculate the distance between waypoints
+            const distance = Math.sqrt(
+              Math.pow(nextWaypoint.longitude - currentWaypoint.longitude, 2) +
+              Math.pow(nextWaypoint.latitude - currentWaypoint.latitude, 2)
+            );
+
+            // Simulate movement (adjust speed as needed)
+            const steps = 1000; // Number of steps between waypoints
+            const stepSizeLon = (nextWaypoint.longitude - currentWaypoint.longitude) / steps;
+            const stepSizeLat = (nextWaypoint.latitude - currentWaypoint.latitude) / steps;
+
+            let step = 0;
+            const interval = setInterval(() => {
+              if (step < steps) {
+                const newLon = currentWaypoint.longitude + stepSizeLon * step;
+                const newLat = currentWaypoint.latitude + stepSizeLat * step;
+                markerRef.current.setLngLat([newLon, newLat]);
+                step++;
+              } else {
+                clearInterval(interval);
+                setCurrentWaypointIndex(nextWaypointIndex);
+              }
+            }, 50); // Adjust speed of movement (milliseconds per step)
+          } else {
+            setIsMoving(false); // Stop moving when the last waypoint is reached
+          }
+        } catch (error) {
+          console.error("Error moving marker:", error);
+        }
+      };
+
+      moveMarker();
+    }
+  }, [currentWaypointIndex, isMoving, selectedFlight]);
 
   return (
     <div>
+      <h1>Flight Plan Viewer</h1>
+
       <div>
-        <label>Source:</label>
-        <select onChange={(e) => setSource(airportsData[e.target.value])}>
-          <option value="">Select Airport</option>
-          {Object.entries(airportsData).map(([key, airport]) => (
-            <option key={key} value={key}>{airport.name} ({key})</option>
+        <label>Select Flight Plan:</label>
+        <select onChange={(e) => setSelectedFlight(e.target.value)}>
+          <option value="">Select Flight Plan</option>
+          {flightPlans.map((flight) => (
+            <option key={flight.callsign} value={flight.callsign}>
+              {flight.callsign}: {flight.departure} to {flight.destination}
+            </option>
           ))}
         </select>
       </div>
-      <div>
-        <label>Destination:</label>
-        <select onChange={(e) => setDestination(airportsData[e.target.value])}>
-          <option value="">Select Airport</option>
-          {Object.entries(airportsData).map(([key, airport]) => (
-            <option key={key} value={key}>{airport.name} ({key})</option>
-          ))}
-        </select>
-      </div>
-      <div>
-        <label>Speed (km/h):</label>
-        <input type="number" value={speed} onChange={(e) => setSpeed(parseFloat(e.target.value))} />
-      </div>
-      <button onClick={handleSubmit}>Start Journey</button>
-      <p>Current Position: Lat {planeData.lat}, Lon {planeData.lon}, Alt {planeData.alt}, Speed {planeData.speed} km/h</p>
+
       <div id="map" style={{ width: "100%", height: "800px" }}></div>
     </div>
   );

@@ -6,59 +6,92 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 
-let planeData = {
-  lat: 37.7749,
-  lon: -122.4194,
-  alt: 10000,
-  speed: 500,
-  destination: null,
-  moving: false,
-};
+// Simulated flight plans
+const flightPlans = [
+  {
+    id: "1",
+    callsign: "SIA123",
+    departure: "WSSS", // Singapore Changi Airport
+    destination: "WMKK", // Kuala Lumpur International Airport
+  },
+  {
+    id: "2",
+    callsign: "QTR456",
+    departure: "OTHH", // Hamad International Airport (Doha)
+    destination: "WSSS", // Singapore Changi Airport
+  },
+];
 
-let animationInterval = null;
+// Simulated airways
+const airways = [
+  {
+    id: "A1",
+    flightPlanId: "1", // Belongs to flight plan SIA123
+    name: "Airway A1",
+    waypoints: ["SINGA", "BETTY"],
+  },
+  {
+    id: "B12",
+    flightPlanId: "1", // Belongs to flight plan SIA123
+    name: "Airway B12",
+    waypoints: ["BETTY", "WMKK"],
+  },
+];
 
-// API to get plane data
-app.get("/api/plane", (req, res) => {
-  res.json(planeData);
+// Simulated waypoints
+const waypoints = [
+  {
+    id: "SINGA",
+    flightPlanId: "1", // Belongs to flight plan SIA123
+    latitude: 1.3521,
+    longitude: 103.8198,
+  },
+  {
+    id: "BETTY",
+    flightPlanId: "1", // Belongs to flight plan SIA123
+    latitude: 2.7456,
+    longitude: 101.7079,
+  },
+  {
+    id: "WMKK",
+    flightPlanId: "1", // Belongs to flight plan SIA123
+    latitude: 3.1390,
+    longitude: 101.6869,
+  },
+];
+
+// API to get flight plans
+app.get("/api/flight-plans", (req, res) => {
+  res.json(flightPlans);
 });
 
-// API to start movement simulation
-app.post("/api/start", (req, res) => {
-  const { lat, lon, alt, speed, destination } = req.body;
+// API to get airways
+app.get("/api/airways", (req, res) => {
+  res.json(airways);
+});
 
-  if (!lat || !lon || !alt || !speed || !destination) {
-    return res.status(400).json({ message: "Invalid data format" });
+// API to get waypoints
+app.get("/api/waypoints", (req, res) => {
+  res.json(waypoints);
+});
+
+// API to get data for a specific flight plan
+app.get("/api/flight-plan/:callsign", (req, res) => {
+  const { callsign } = req.params;
+  const flightPlan = flightPlans.find((flight) => flight.callsign === callsign);
+
+  if (!flightPlan) {
+    return res.status(404).json({ message: "Flight plan not found" });
   }
 
-  planeData = { lat, lon, alt, speed, destination, moving: true };
-
-  // Clear any existing animation
-  if (animationInterval) clearInterval(animationInterval);
-
-  const movePlane = () => {
-    const { lat: destLat, lon: destLon } = planeData.destination;
-    const totalSteps = Math.ceil(100 / (speed / 100)); // Adjust movement smoothness based on speed
-    const distanceLat = (destLat - planeData.lat) / totalSteps;
-    const distanceLon = (destLon - planeData.lon) / totalSteps;
-
-    animationInterval = setInterval(() => {
-      planeData.lat += distanceLat;
-      planeData.lon += distanceLon;
-      
-      if (
-        Math.abs(planeData.lat - destLat) < Math.abs(distanceLat) &&
-        Math.abs(planeData.lon - destLon) < Math.abs(distanceLon)
-      ) {
-        clearInterval(animationInterval);
-        planeData.lat = destLat;
-        planeData.lon = destLon;
-        planeData.moving = false;
-      }
-    }, 500 / (speed / 100)); // Adjust update frequency based on speed
+  // Add airways and waypoints to the flight plan
+  const flightRoute = {
+    ...flightPlan,
+    airways: airways.filter((airway) => airway.flightPlanId === flightPlan.id),
+    waypoints: waypoints.filter((waypoint) => waypoint.flightPlanId === flightPlan.id),
   };
 
-  movePlane();
-  res.json({ message: "Plane journey started" });
+  res.json(flightRoute);
 });
 
 const PORT = 5000;
