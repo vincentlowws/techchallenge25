@@ -73,10 +73,16 @@ const waypoints = [
 
 ];
 
+// Health check endpoint
+app.get("/healthcheck", (req, res) => {
+  res.status(200).json({ status: "healthy", timestamp: new Date() });
+});
+
 // API to get flight plans
 app.get("/api/flight-plans", (req, res) => {
   res.json(flightPlans);
 });
+
 
 // API to get airways
 app.get("/api/airways", (req, res) => {
