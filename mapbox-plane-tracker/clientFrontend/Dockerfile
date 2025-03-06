@@ -1,5 +1,5 @@
 # Use an official Node.js image as the base
-FROM node:18
+FROM node:18 AS build
 
 # Set the working directory inside the container
 WORKDIR /app
@@ -14,11 +14,12 @@ COPY . .
 # Build the React app
 RUN npm run build
 
-# Install a static file server (e.g., serve)
-RUN npm install -g serve
+# Use Nginx to serve the static frontend files
+FROM nginx:alpine
+COPY --from=build /app/build /usr/share/nginx/html
 
-# Expose the port the app will run on
+# Expose the port Nginx will run on
 EXPOSE 80
 
-# Start the static file server
-CMD ["serve", "-s", "build", "-l", "80"]
+# Start Nginx
+CMD ["nginx", "-g", "daemon off;"]

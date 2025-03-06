@@ -4,7 +4,8 @@ import axios from "axios";
 import "mapbox-gl/dist/mapbox-gl.css";
 
 
-mapboxgl.accessToken = process.env.REACT_APP_MAPBOX_ACCESS_TOKEN;
+// mapboxgl.accessToken = process.env.REACT_APP_MAPBOX_ACCESS_TOKEN;
+mapboxgl.accessToken = "pk.eyJ1IjoidG5lY25pdiIsImEiOiJjbDI1eG9hZGUwMDd5M2xwd3poOGI4dG53In0.C9Mw9x7e-QpHpD5gOuQ2Eg";
 
 const App = () => {
   const mapRef = useRef(null);
@@ -18,7 +19,7 @@ const App = () => {
   useEffect(() => {
     const fetchFlightPlans = async () => {
       try {
-        const response = await axios.get(process.env.REACT_APP_API_URL+"/api/flight-plans");
+        const response = await axios.get("http://13.212.6.28:5000"+"/api/flight-plans");
         setFlightPlans(response.data);
       } catch (error) {
         console.error("Error fetching flight plans:", error);
@@ -82,7 +83,7 @@ const App = () => {
       const fetchFlightRoute = async () => {
         try {
           const response = await axios.get(
-            process.env.REACT_APP_API_URL+`/api/flight-plan/${selectedFlight}`
+            "http://13.212.6.28:5000"+`/api/flight-plan/${selectedFlight}`
           );
           const flightRoute = response.data;
 
@@ -153,7 +154,7 @@ const App = () => {
       const moveMarker = async () => {
         try {
           const response = await axios.get(
-            process.env.REACT_APP_API_URL+`/api/flight-plan/${selectedFlight}`
+            "http://13.212.6.28:5000"+`/api/flight-plan/${selectedFlight}`
           );
           const flightRoute = response.data;
 
