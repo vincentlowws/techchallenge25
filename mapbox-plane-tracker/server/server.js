@@ -28,12 +28,18 @@ const airways = [
     id: "A1",
     flightPlanId: "1", // Belongs to flight plan SIA123
     name: "Airway A1",
-    waypoints: ["SINGA", "BETTY"],
+    waypoints: ["SINGA", "SELETARAIRPORT"],
   },
   {
-    id: "B12",
+    id: "A2",
     flightPlanId: "1", // Belongs to flight plan SIA123
-    name: "Airway B12",
+    name: "Airway A2",
+    waypoints: ["SELETARAIRPORT", "BETTY"],
+  },
+  {
+    id: "A3",
+    flightPlanId: "1", // Belongs to flight plan SIA123
+    name: "Airway A3",
     waypoints: ["BETTY", "WMKK"],
   },
 ];
@@ -47,6 +53,12 @@ const waypoints = [
     longitude: 103.8198,
   },
   {
+    id: "SELETARAIRPORT",
+    flightPlanId: "1", // Belongs to flight plan SIA123
+    latitude: 1.408043,
+    longitude: 103.865207,
+  },
+  {
     id: "BETTY",
     flightPlanId: "1", // Belongs to flight plan SIA123
     latitude: 2.7456,
@@ -58,6 +70,7 @@ const waypoints = [
     latitude: 3.1390,
     longitude: 101.6869,
   },
+
 ];
 
 // API to get flight plans
