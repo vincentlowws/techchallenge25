@@ -1,77 +1,13 @@
 require("dotenv").config();
 const express = require("express");
 const cors = require("cors");
+const axios = require("axios");
 
 const app = express();
 app.use(cors());
 app.use(express.json());
 
-// Simulated flight plans
-const flightPlans = [
-  {
-    id: "1",
-    callsign: "SIA123",
-    departure: "WSSS", // Singapore Changi Airport
-    destination: "WMKK", // Kuala Lumpur International Airport
-  },
-  {
-    id: "2",
-    callsign: "QTR456",
-    departure: "OTHH", // Hamad International Airport (Doha)
-    destination: "WSSS", // Singapore Changi Airport
-  },
-];
-
-// Simulated airways
-const airways = [
-  {
-    id: "A1",
-    flightPlanId: "1", // Belongs to flight plan SIA123
-    name: "Airway A1",
-    waypoints: ["SINGA", "SELETARAIRPORT"],
-  },
-  {
-    id: "A2",
-    flightPlanId: "1", // Belongs to flight plan SIA123
-    name: "Airway A2",
-    waypoints: ["SELETARAIRPORT", "BETTY"],
-  },
-  {
-    id: "A3",
-    flightPlanId: "1", // Belongs to flight plan SIA123
-    name: "Airway A3",
-    waypoints: ["BETTY", "WMKK"],
-  },
-];
-
-// Simulated waypoints
-const waypoints = [
-  {
-    id: "SINGA",
-    flightPlanId: "1", // Belongs to flight plan SIA123
-    latitude: 1.3521,
-    longitude: 103.8198,
-  },
-  {
-    id: "SELETARAIRPORT",
-    flightPlanId: "1", // Belongs to flight plan SIA123
-    latitude: 1.408043,
-    longitude: 103.865207,
-  },
-  {
-    id: "BETTY",
-    flightPlanId: "1", // Belongs to flight plan SIA123
-    latitude: 2.7456,
-    longitude: 101.7079,
-  },
-  {
-    id: "WMKK",
-    flightPlanId: "1", // Belongs to flight plan SIA123
-    latitude: 3.1390,
-    longitude: 101.6869,
-  },
-
-];
+const API_KEY = "b7bc6577-b73e-4b56-94b6-0d1569bce711"; // API key for the external APIs
 
 // Health check endpoint
 app.get("/healthcheck", (req, res) => {
@@ -79,39 +15,66 @@ app.get("/healthcheck", (req, res) => {
 });
 
 // API to get flight plans
-app.get("/api/flight-plans", (req, res) => {
-  res.json(flightPlans);
-});
-
-
-// API to get airways
-app.get("/api/airways", (req, res) => {
-  res.json(airways);
-});
-
-// API to get waypoints
-app.get("/api/waypoints", (req, res) => {
-  res.json(waypoints);
+app.get("/api/flight-plans", async (req, res) => {
+  try {
+    const response = await axios.get("http://api.swimapisg.info:9080/flight-manager/displayAll?apikey=b7bc6577-b73e-4b56-94b6-0d1569bce711");
+    res.json(response.data);
+  } catch (error) {
+    console.error("Error fetching flight plans:", error);
+    res.status(500).json({ message: "Error fetching flight plans" });
+  }
 });
 
 // API to get data for a specific flight plan
-app.get("/api/flight-plan/:callsign", (req, res) => {
+app.get("/api/flight-plan/:callsign", async (req, res) => {
   const { callsign } = req.params;
-  const flightPlan = flightPlans.find((flight) => flight.callsign === callsign);
 
-  if (!flightPlan) {
-    return res.status(404).json({ message: "Flight plan not found" });
+  try {
+    // Fetch flight plans from the external API
+    const flightPlansResponse = await axios.get("http://api.swimapisg.info:9080/flight-manager/displayAll?apikey=b7bc6577-b73e-4b56-94b6-0d1569bce711");
+
+    // Find the specific flight plan by callsign
+    const flightPlan = flightPlansResponse.data.find(
+      (flight) => flight.aircraftIdentification === callsign
+    );
+
+    if (!flightPlan) {
+      return res.status(404).json({ message: "Flight plan not found" });
+    }
+
+    // Fetch waypoints from the Fixes API
+    const waypointsResponse = await axios.get("http://api.swimapisg.info:9080/geopoints/list/fixes?apikey=b7bc6577-b73e-4b56-94b6-0d1569bce711");
+
+    // Extract waypoints for the flight plan
+    const waypoints = flightPlan.filedRoute.routeElement
+      .map((element) => {
+        // Check if position and designatedPoint exist
+        if (element.position && element.position.designatedPoint) {
+          const fix = waypointsResponse.data.find((fix) =>
+            fix.startsWith(element.position.designatedPoint)
+          );
+          if (fix) {
+            const [name, coords] = fix.split(" ");
+            const [lat, lon] = coords.replace(/[()]/g, "").split(",");
+            return {
+              id: name,
+              latitude: parseFloat(lat),
+              longitude: parseFloat(lon),
+            };
+          }
+        }
+        return null; // Skip invalid waypoints
+      })
+      .filter((waypoint) => waypoint !== null); // Remove null values
+
+    // Return the flight plan with waypoints
+    res.json({ ...flightPlan, waypoints });
+  } catch (error) {
+    console.error("Error fetching flight route:", error);
+    res.status(500).json({ message: "Error fetching flight route" });
   }
-
-  // Add airways and waypoints to the flight plan
-  const flightRoute = {
-    ...flightPlan,
-    airways: airways.filter((airway) => airway.flightPlanId === flightPlan.id),
-    waypoints: waypoints.filter((waypoint) => waypoint.flightPlanId === flightPlan.id),
-  };
-
-  res.json(flightRoute);
 });
 
+// Start the server
 const PORT = 5000;
 app.listen(PORT, () => console.log(`Server running on port ${PORT}`));

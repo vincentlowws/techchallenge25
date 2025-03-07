@@ -3,8 +3,6 @@ import mapboxgl from "mapbox-gl";
 import axios from "axios";
 import "mapbox-gl/dist/mapbox-gl.css";
 
-
-// mapboxgl.accessToken = process.env.REACT_APP_MAPBOX_ACCESS_TOKEN;
 mapboxgl.accessToken = "pk.eyJ1IjoidG5lY25pdiIsImEiOiJjbDI1eG9hZGUwMDd5M2xwd3poOGI4dG53In0.C9Mw9x7e-QpHpD5gOuQ2Eg";
 
 const App = () => {
@@ -19,7 +17,7 @@ const App = () => {
   useEffect(() => {
     const fetchFlightPlans = async () => {
       try {
-        const response = await axios.get("http://13.212.6.28:5000"+"/api/flight-plans");
+        const response = await axios.get("http://localhost:5000/api/flight-plans");
         setFlightPlans(response.data);
       } catch (error) {
         console.error("Error fetching flight plans:", error);
@@ -37,6 +35,11 @@ const App = () => {
         style: "mapbox://styles/mapbox/streets-v11",
         center: [103.8198, 1.3521], // Default to Singapore
         zoom: 8,
+        renderWorldCopies: false, // Disable rendering multiple copies of the world
+        maxBounds: [
+          [-180, -90], // Southwest corner of the world
+          [180, 90], // Northeast corner of the world
+        ], // Restrict the map to one instance of the world
       });
 
       map.on("load", () => {
@@ -83,7 +86,7 @@ const App = () => {
       const fetchFlightRoute = async () => {
         try {
           const response = await axios.get(
-            "http://13.212.6.28:5000"+`/api/flight-plan/${selectedFlight}`
+            `http://localhost:5000/api/flight-plan/${selectedFlight}`
           );
           const flightRoute = response.data;
 
@@ -154,7 +157,7 @@ const App = () => {
       const moveMarker = async () => {
         try {
           const response = await axios.get(
-            "http://13.212.6.28:5000"+`/api/flight-plan/${selectedFlight}`
+            `http://localhost:5000/api/flight-plan/${selectedFlight}`
           );
           const flightRoute = response.data;
 
@@ -207,12 +210,20 @@ const App = () => {
         <select onChange={(e) => setSelectedFlight(e.target.value)}>
           <option value="">Select Flight Plan</option>
           {flightPlans.map((flight) => (
-            <option key={flight.callsign} value={flight.callsign}>
-              {flight.callsign}: {flight.departure} to {flight.destination}
+            <option key={flight._id} value={flight.aircraftIdentification}>
+              {flight.aircraftIdentification}: {flight.departure.departureAerodrome} to {flight.arrival.destinationAerodrome}
             </option>
           ))}
         </select>
       </div>
+
+      {selectedFlight && (
+        <div>
+          <h2>Flight Details</h2>
+          <p>Departure Aerodrome: {flightPlans.find(flight => flight.aircraftIdentification === selectedFlight)?.departure.departureAerodrome}</p>
+          <p>Destination Aerodrome: {flightPlans.find(flight => flight.aircraftIdentification === selectedFlight)?.arrival.destinationAerodrome}</p>
+        </div>
+      )}
 
       <div id="map" style={{ width: "100%", height: "800px" }}></div>
     </div>
