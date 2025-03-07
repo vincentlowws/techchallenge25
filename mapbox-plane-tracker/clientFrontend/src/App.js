@@ -46,7 +46,7 @@ const App = () => {
     if (!mapRef.current) {
       const map = new mapboxgl.Map({
         container: 'map',
-        style: 'mapbox://styles/mapbox/streets-v11',
+        style: 'mapbox://styles/mapbox/satellite-streets-v11',
         center: [103.8198, 1.3521],
         zoom: 8,
         renderWorldCopies: false,
