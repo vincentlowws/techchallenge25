@@ -9,9 +9,11 @@ const App = () => {
   const mapRef = useRef(null);
   const markerRef = useRef(null);
   const [flightPlans, setFlightPlans] = useState([]);
+  const [filteredFlightPlans, setFilteredFlightPlans] = useState([]);
   const [selectedFlight, setSelectedFlight] = useState(null);
   const [currentWaypointIndex, setCurrentWaypointIndex] = useState(0);
   const [isMoving, setIsMoving] = useState(false);
+  const [searchQuery, setSearchQuery] = useState('');
 
   // Fetch flight plans
   useEffect(() => {
@@ -19,12 +21,25 @@ const App = () => {
       try {
         const response = await axios.get('http://localhost:5000/api/flight-plans');
         setFlightPlans(response.data);
+        setFilteredFlightPlans(response.data); // Initialize filtered flight plans
       } catch (error) {
         console.error('Error fetching flight plans:', error);
       }
     };
     fetchData();
   }, []);
+
+  // Filter flight plans based on search query
+  useEffect(() => {
+    if (searchQuery) {
+      const filtered = flightPlans.filter(flight =>
+        flight.aircraftIdentification.toLowerCase().includes(searchQuery.toLowerCase())
+      );
+      setFilteredFlightPlans(filtered);
+    } else {
+      setFilteredFlightPlans(flightPlans); // Reset to all flight plans if search query is empty
+    }
+  }, [searchQuery, flightPlans]);
 
   // Initialize map
   useEffect(() => {
@@ -202,10 +217,20 @@ const App = () => {
       <h1>Flight Route Viewer</h1>
       
       <div style={{ margin: '20px 0' }}>
+        <label>Search Flight: </label>
+        <input
+          type="text"
+          placeholder="Enter callsign..."
+          value={searchQuery}
+          onChange={e => setSearchQuery(e.target.value)}
+        />
+      </div>
+
+      <div style={{ margin: '20px 0' }}>
         <label>Select Flight: </label>
         <select onChange={e => setSelectedFlight(e.target.value)}>
           <option value="">Choose a flight...</option>
-          {flightPlans.map(flight => (
+          {filteredFlightPlans.map(flight => (
             <option key={flight._id} value={flight.aircraftIdentification}>
               {flight.aircraftIdentification}: {flight.departure.departureAerodrome} → 
               {flight.arrival.destinationAerodrome}

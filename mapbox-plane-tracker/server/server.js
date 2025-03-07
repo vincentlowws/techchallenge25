@@ -12,17 +12,53 @@ const axiosInstance = axios.create({
   httpsAgent: new https.Agent({ rejectUnauthorized: false })
 });
 
+// Variables to store static data
+let fixesData = null;
+let airwaysData = null;
+
+// Function to fetch static data (fixes and airways)
+const fetchStaticData = async () => {
+  try {
+    const [fixesResponse, airwaysResponse] = await Promise.all([
+      axiosInstance.get('http://api.swimapisg.info:9080/geopoints/list/fixes?apikey=b7bc6577-b73e-4b56-94b6-0d1569bce711'),
+      axiosInstance.get('http://api.swimapisg.info:9080/geopoints/list/airways?apikey=b7bc6577-b73e-4b56-94b6-0d1569bce711')
+    ]);
+
+    fixesData = fixesResponse.data;
+    airwaysData = airwaysResponse.data;
+    console.log('Static data (fixes and airways) fetched successfully.');
+  } catch (error) {
+    console.error('Error fetching static data:', error);
+  }
+};
+
+// Fetch static data on server startup
+fetchStaticData();
+
 // Health check endpoint
 app.get('/healthcheck', (req, res) => {
   res.status(200).json({ status: 'healthy', timestamp: new Date() });
 });
 
-// Get all flight plans for display on dropbox
+// Get all flight plans or search by callsign
 app.get('/api/flight-plans', async (req, res) => {
+  const { callsign } = req.query; // Get callsign from query parameter
+
   try {
     const response = await axiosInstance.get(
-      'http://api.swimapisg.info:9080/flight-manager/displayAll?apikey=b7bc6577-b73e-4b56-94b6-0d1569bce711');
-    res.json(response.data);
+      'http://api.swimapisg.info:9080/flight-manager/displayAll?apikey=b7bc6577-b73e-4b56-94b6-0d1569bce711'
+    );
+
+    let flightPlans = response.data;
+
+    // Filter flight plans by callsign if provided
+    if (callsign) {
+      flightPlans = flightPlans.filter(flight =>
+        flight.aircraftIdentification.toLowerCase().includes(callsign.toLowerCase())
+      );
+    }
+
+    res.json(flightPlans);
   } catch (error) {
     console.error('Error fetching flight plans:', error);
     res.status(500).json({ message: 'Error fetching flight plans' });
@@ -32,13 +68,13 @@ app.get('/api/flight-plans', async (req, res) => {
 // Get detailed flight plan with waypoints and airways
 app.get('/api/flight-plan/:callsign', async (req, res) => {
   const { callsign } = req.params;
-  
+
+  console.log("callsign--> " + callsign);
   try {
-    const [flightRes, fixesRes, airwaysRes] = await Promise.all([
-      axiosInstance.get('http://api.swimapisg.info:9080/flight-manager/displayAll?apikey=b7bc6577-b73e-4b56-94b6-0d1569bce711'),
-      axiosInstance.get('http://api.swimapisg.info:9080/geopoints/list/fixes?apikey=b7bc6577-b73e-4b56-94b6-0d1569bce711'),
-      axiosInstance.get('http://api.swimapisg.info:9080/geopoints/list/airways?apikey=b7bc6577-b73e-4b56-94b6-0d1569bce711')
-    ]);
+    // Fetch flight data
+    const flightRes = await axiosInstance.get(
+      'http://api.swimapisg.info:9080/flight-manager/displayAll?apikey=b7bc6577-b73e-4b56-94b6-0d1569bce711'
+    );
 
     const flight = flightRes.data.find(f => f.aircraftIdentification === callsign);
     if (!flight) return res.status(404).json({ message: 'Flight not found' });
@@ -47,10 +83,11 @@ app.get('/api/flight-plan/:callsign', async (req, res) => {
     const airways = [];
     const route = flight.filedRoute.routeElement;
 
+    // Process waypoints and airways using pre-fetched static data
     for (const element of route) {
       // Process waypoints
       if (element.position?.designatedPoint) {
-        const fix = fixesRes.data.find(f => f.startsWith(element.position.designatedPoint));
+        const fix = fixesData.find(f => f.startsWith(element.position.designatedPoint));
         if (fix) {
           const [name, coords] = fix.split(' ');
           const [lat, lon] = coords.replace(/[()]/g, '').split(',');
@@ -64,17 +101,20 @@ app.get('/api/flight-plan/:callsign', async (req, res) => {
 
       // Process airways
       if (element.airway) {
-        airways.push({
-          name: element.airway,
-          type: element.airwayType
-        });
+        // Check if the airway exists in the airwaysData array
+        if (airwaysData.includes(element.airway)) {
+          airways.push({
+            name: element.airway,
+            type: element.airwayType
+          });
+        }
       }
     }
 
     res.json({
       ...flight,
       waypoints,
-      airways: [...new Set(airways.map(a => a.name))]
+      airways: [...new Set(airways.map(a => a.name))] // Deduplicate airway names
     });
 
   } catch (error) {

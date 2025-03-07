@@ -1,0 +1,67 @@
+SIA469
+
+"routeElement": [
+                {
+                    "position": {
+                        "designatedPoint": "KAT" --> -4.79,144.25
+                    },
+                    "seqNum": 0,
+                    "airway": "P570",
+                    "airwayType": "NAMED"
+                },
+                {
+                    "position": {
+                        "designatedPoint": "SULEN"
+                    },
+                    "changeLevel": "410 F",
+                    "changeSpeed": "0.85 M",
+                    "seqNum": 1,
+                    "airway": "P570",
+                    "airwayType": "NAMED"
+                },
+                {
+                    "position": {
+                        "designatedPoint": "MABIX"
+                    },
+                    "changeLevel": "410 F",
+                    "changeSpeed": "486 N",
+                    "seqNum": 2,
+                    "airway": "P756",
+                    "airwayType": "NAMED"
+                },
+                {
+                    "position": {
+                        "designatedPoint": "OKABU"
+                    },
+                    "changeLevel": "410 F",
+                    "changeSpeed": "0.85 M",
+                    "seqNum": 3,
+                    "airway": "M300",
+                    "airwayType": "NAMED"
+                },
+                {
+                    "position": {
+                        "designatedPoint": "SALAX"
+                    },
+                    "changeLevel": "410 F",
+                    "changeSpeed": "486 N",
+                    "seqNum": 4,
+                    "airway": "Y340",
+                    "airwayType": "NAMED"
+                },
+                {
+                    "position": {
+                        "designatedPoint": "BATAR" --> 2.17,102.09
+                    },
+                    "seqNum": 5,
+                    "airway": "A464",
+                    "airwayType": "NAMED"
+                },
+                {
+                    "position": {
+                        "designatedPoint": "ARAMA"
+                    },
+                    "seqNum": 6,
+                    "airwayType": "NAMED"
+                }
+            ]
