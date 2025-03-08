@@ -6,8 +6,31 @@ on:
       - main
 
 jobs:
-  build-and-push:  # 🔹 Renamed from 'build'
+  test:
     runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: '16' # Use the appropriate Node.js version for your project
+
+      - name: Install dependencies
+        run: |
+          cd mapbox-plane-tracker/server
+          npm install
+
+      - name: Run unit tests
+        run: |
+          cd mapbox-plane-tracker/server
+          npm test
+    
+  build-and-push:  
+    runs-on: ubuntu-latest
+    needs: test # Ensure the build job runs only if tests pass
 
     steps:
       - name: Checkout code
