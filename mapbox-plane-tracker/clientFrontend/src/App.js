@@ -14,12 +14,13 @@ const App = () => {
   const [currentWaypointIndex, setCurrentWaypointIndex] = useState(0);
   const [isMoving, setIsMoving] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
+  const [flightPath, setFlightPath] = useState(null); // Store flight path
 
   // Fetch flight plans
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const response = await axios.get('http://localhost:5000/api/flight-plans');
+        const response = await axios.get('http://localhost:5001/api/flight-plans');
         setFlightPlans(response.data);
         setFilteredFlightPlans(response.data); // Initialize filtered flight plans
       } catch (error) {
@@ -106,9 +107,12 @@ const App = () => {
     const fetchRoute = async () => {
       try {
         const response = await axios.get(
-          `http://localhost:5000/api/flight-plan/${selectedFlight}`
+          `http://localhost:5001/api/flight-plan/${selectedFlight}`
         );
         const { waypoints, airways } = response.data;
+
+        // Store flight path in state
+        setFlightPath(waypoints);
 
         // Update route
         const coordinates = waypoints.map(w => [w.longitude, w.latitude]);
@@ -125,27 +129,6 @@ const App = () => {
             geometry: { type: 'Point', coordinates: [w.longitude, w.latitude] },
             properties: { id: w.id }
           }))
-        });
-
-        // Update airway labels
-        const airwayFeatures = coordinates.slice(1).map((coord, i) => {
-          const prev = coordinates[i];
-          return {
-            type: 'Feature',
-            geometry: {
-              type: 'Point',
-              coordinates: [
-                (prev[0] + coord[0]) / 2,
-                (prev[1] + coord[1]) / 2
-              ]
-            },
-            properties: { airway: airways[i] || 'Unknown' }
-          };
-        });
-
-        mapRef.current.getSource('airway-labels').setData({
-          type: 'FeatureCollection',
-          features: airwayFeatures
         });
 
         // Add plane marker
@@ -169,48 +152,38 @@ const App = () => {
 
   // Animate plane movement
   useEffect(() => {
-    if (!isMoving || !selectedFlight || !markerRef.current) return;
+    if (!isMoving || !selectedFlight || !markerRef.current || !flightPath) return;
 
-    const animate = async () => {
-      try {
-        const response = await axios.get(
-          `http://localhost:5000/api/flight-plan/${selectedFlight}`
-        );
-        const { waypoints } = response.data;
+    const animate = () => {
+      if (currentWaypointIndex >= flightPath.length - 1) {
+        setIsMoving(false);
+        return;
+      }
 
-        if (currentWaypointIndex >= waypoints.length - 1) {
-          setIsMoving(false);
+      const start = flightPath[currentWaypointIndex];
+      const end = flightPath[currentWaypointIndex + 1];
+      const steps = 100;
+      let step = 0;
+
+      const interval = setInterval(() => {
+        if (step >= steps) {
+          clearInterval(interval);
+          setCurrentWaypointIndex(i => i + 1);
           return;
         }
 
-        const start = waypoints[currentWaypointIndex];
-        const end = waypoints[currentWaypointIndex + 1];
-        const steps = 100;
-        let step = 0;
-
-        const interval = setInterval(() => {
-          if (step >= steps) {
-            clearInterval(interval);
-            setCurrentWaypointIndex(i => i + 1);
-            return;
-          }
-
-          const lng = start.longitude + 
-            (end.longitude - start.longitude) * (step / steps);
-          const lat = start.latitude + 
-            (end.latitude - start.latitude) * (step / steps);
-          
-          markerRef.current.setLngLat([lng, lat]);
-          step++;
-        }, 50);
-
-      } catch (error) {
-        console.error('Error animating flight:', error);
-      }
+        const lng = start.longitude + 
+          (end.longitude - start.longitude) * (step / steps);
+        const lat = start.latitude + 
+          (end.latitude - start.latitude) * (step / steps);
+        
+        markerRef.current.setLngLat([lng, lat]);
+        step++;
+      }, 50);
     };
 
     animate();
-  }, [currentWaypointIndex, isMoving, selectedFlight]);
+  }, [currentWaypointIndex, isMoving, selectedFlight, flightPath]);
 
   return (
     <div>

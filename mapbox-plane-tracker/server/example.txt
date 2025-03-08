@@ -1,0 +1,142 @@
+(1) display all to show dropdown of all callsign and flightpath
+
+(2) using SIA469 as example, access routeElement
+
+routeElement": [
+                {
+                    "position": {
+                        "designatedPoint": "KAT"
+                    },
+                    "seqNum": 0,
+                    "airway": "P570",
+                    "airwayType": "NAMED"
+                },
+                {
+                    "position": {
+                        "designatedPoint": "SULEN"
+                    },
+                    "changeLevel": "410 F",
+                    "changeSpeed": "0.85 M",
+                    "seqNum": 1,
+                    "airway": "P570",
+                    "airwayType": "NAMED"
+                },
+                {
+                    "position": {
+                        "designatedPoint": "MABIX"
+                    },
+                    "changeLevel": "410 F",
+                    "changeSpeed": "486 N",
+                    "seqNum": 2,
+                    "airway": "P756",
+                    "airwayType": "NAMED"
+                },
+                {
+                    "position": {
+                        "designatedPoint": "OKABU"
+                    },
+                    "changeLevel": "410 F",
+                    "changeSpeed": "0.85 M",
+                    "seqNum": 3,
+                    "airway": "M300",
+                    "airwayType": "NAMED"
+                },
+                {
+                    "position": {
+                        "designatedPoint": "SALAX"
+                    },
+                    "changeLevel": "410 F",
+                    "changeSpeed": "486 N",
+                    "seqNum": 4,
+                    "airway": "Y340",
+                    "airwayType": "NAMED"
+                },
+                {
+                    "position": {
+                        "designatedPoint": "BATAR"
+                    },
+                    "seqNum": 5,
+                    "airway": "A464",
+                    "airwayType": "NAMED"
+                },
+                {
+                    "position": {
+                        "designatedPoint": "ARAMA"
+                    },
+                    "seqNum": 6,
+                    "airwayType": "NAMED"
+                }
+            ],
+
+There are 7 Elements all have a fix and an airway except ARAMA only have fix.
+P570(KAT) -->  P570(SULEN) --> P756(MABIX) --> M300(OKABU) --> Y340(SALAX) --> A464(BATAR) --> ARAMA
+
+(3) call https://api.swimapisg.info/geopoints/search/airways/<AIRWAY>>?apikey for each of the airway and 
+extract the start and end of the flight path
+
+ https://api.swimapisg.info/geopoints/search/airways/P570
+
+ ["P570: [MIXAM,ITURA,GIDAN,TOLDA,EMURU,BONOM,TAVKO,GOLNI,KITAL,TEGOR,LATEB,METIP,
+ NIVUD,OTABI,OLNIK,POMAN,DOTAT,TVM,BASUR,CI,KAT,TEMAX,VEVET,TEBIT,POPAK,SULEN,NIXUL,
+ MABIX,DOLEM,KAGAS,BIRAS,PKU]"]
+
+ ["P756: [MLE,GOKAM,SABDI,UBKIN,RUXER,EGODU,LAKIP,OBDAL,NISOK,MABIX,MDN]"]
+
+ ["M300: [EMURU,GOLBA,GADMA,LOTAV,KADOL,LEMAX,MESAN,NITIX,OSIRI,IGAMA,DOLPI
+ ,ORISA,MOLRU,CLC,MDI,RUNOT,ATETA,ESPAP,IDUDO,RULKA,TOPIN,BULVA,OKABU,PEKDO,SALAX]"]
+
+ ["Y340: [GUPTA,BATAR,SALAX]"]
+
+[0] P570(KAT)
+ start => KAT
+ endFix => SULEN 
+
+WAYPOINT ==> KAT --> TEMAX--> VEVET -->TEBIT-->POPAK -->SULEN
+
+[1] P570(SULEN)
+ start => SULEN 
+ end => MABIX
+
+ WAYPOINT ==> KAT --> TEMAX--> VEVET -->TEBIT-->POPAK -->SULEN
+ --> NIXUL --> MABIX
+
+ [2] P756(MABIX)
+start => MABIX
+end => OKABU
+
+okabu not found in P756, so direct connect to OKABU
+
+ WAYPOINT ==> KAT --> TEMAX--> VEVET -->TEBIT-->POPAK -->SULEN
+ --> NIXUL --> MABIX 
+ --> OKABU 
+
+ [3] M300(OKABU)
+ start OKABU
+ end SALAX
+
+ WAYPOINT ==> KAT --> TEMAX--> VEVET -->TEBIT-->POPAK -->SULEN
+ --> NIXUL --> MABIX 
+ --> OKABU 
+ --> PEKDO --> SALAX
+
+ [4]  Y340(SALAX)
+ start SALAX
+ end BATAR
+
+
+Final Waypoints: [
+  {
+    "id": "VCBI",
+    "id": "KATTO",
+    "id": "SULEN",
+    "id": "NIXUL",
+    "id": "MABIX",
+    "id": "OKABU",
+    "id": "PEKDO",
+    "id": "SALAX",
+    "id": "BATAR",
+    "id": "OGAKO",
+    "id": "ARAMA",
+    "id": "WSSS",
+  }
+]

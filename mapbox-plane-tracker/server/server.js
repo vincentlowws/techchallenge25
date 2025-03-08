@@ -162,6 +162,9 @@ app.get('/api/flight-plan/:callsign', async (req, res) => {
       }
     }
 
+    console.log("Final Waypoints:", JSON.stringify(waypoints, null, 2));
+
+
     res.json({
       ...flight,
       waypoints,
@@ -175,7 +178,7 @@ app.get('/api/flight-plan/:callsign', async (req, res) => {
   }
 });
 
-const PORT = 5000;
+const PORT = 5001;
 const server = app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
 
 // Export the server for testing
