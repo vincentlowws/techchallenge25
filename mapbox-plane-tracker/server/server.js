@@ -123,5 +123,8 @@ app.get('/api/flight-plan/:callsign', async (req, res) => {
   }
 });
 
-const PORT = 5000;
-app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
+const PORT = 5001;
+const server = app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
+
+// Export the server for testing
+module.exports = {app, server} ;
