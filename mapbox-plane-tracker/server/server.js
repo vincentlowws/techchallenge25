@@ -71,7 +71,7 @@ app.get('/api/flight-plan/:callsign', async (req, res) => {
 
   console.log("callsign--> " + callsign);
   try {
-    // Fetch flight data
+    // (1) Fetch flight data
     const flightRes = await axiosInstance.get(
       'https://api.swimapisg.info/flight-manager/displayAll?apikey=b7bc6577-b73e-4b56-94b6-0d1569bce711'
     );
@@ -83,14 +83,18 @@ app.get('/api/flight-plan/:callsign', async (req, res) => {
     const airways = [];
     const route = flight.filedRoute.routeElement;
 
-    // Process waypoints and airways using pre-fetched static data
-    for (const element of route) {
-      // Process waypoints
+    // (2) Process route elements e.g. FIX1 -> AIRWAY1 -> FIX2 -> AIRWAY2 -> FIX3
+    for (let i = 0; i < route.length; i++) {
+      const element = route[i];
+
+      // (3) Process fixes get the lat and lon
       if (element.position?.designatedPoint) {
         const fix = fixesData.find(f => f.startsWith(element.position.designatedPoint));
         if (fix) {
           const [name, coords] = fix.split(' ');
           const [lat, lon] = coords.replace(/[()]/g, '').split(',');
+                
+          // (4) push the fix's lat lon
           waypoints.push({
             id: name,
             latitude: parseFloat(lat),
@@ -99,14 +103,61 @@ app.get('/api/flight-plan/:callsign', async (req, res) => {
         }
       }
 
-      // Process airways
-      if (element.airway) {
-        // Check if the airway exists in the airwaysData array
-        if (airwaysData.includes(element.airway)) {
-          airways.push({
-            name: element.airway,
-            type: element.airwayType
-          });
+      // (5) Process airways, airwayType = NAMED
+      if (element.airway && element.airwayType === "NAMED") {
+        try {
+          // Fetch detailed airway information
+          const airwayRes = await axiosInstance.get(
+            `https://api.swimapisg.info/geopoints/search/airways/${element.airway}?apikey=b7bc6577-b73e-4b56-94b6-0d1569bce711`
+          );
+
+          //(6) airway details consists of e.g. ["Z650: [MANRO,POGAV,MOLID,BCU,BUCSA,TOMET,RAROS,TGM,REBLA,
+          // EREDI,LUNAV,OBARA,RULES,NARKA,ABITU,BERVA,PEPIK,IVOLI,ROKEM,VEMUT,TIPAM,NIKUS,NOGRA,ERETO,
+          // TONSU,SULUS]"]
+
+          // TODO: Error Checking
+          const airwayDetails = airwayRes.data[0]; // Assuming the API returns an array with one element, 
+          if (airwayDetails) {
+            // Extract waypoints from the airway details
+            const airwayPoints = airwayDetails.split(':')[1].replace(/[\[\]]/g, '').split(',');
+
+            // (7) Find the start and end fixes for the airway
+            const startFix = waypoints[waypoints.length - 1]?.id; // Last added fix
+            const endFix = route[i + 1]?.position?.designatedPoint; // Next fix in the route
+
+            if (startFix && endFix) {
+              // (8) Find the indices of the start and end fixes in the airway details
+              const startIndex = airwayPoints.indexOf(startFix.trim());
+              const endIndex = airwayPoints.indexOf(endFix.trim());
+
+              if (startIndex !== -1 && endIndex !== -1) {
+                // (9) Add the waypoints between the start and end fixes
+                for (let j = startIndex; j <= endIndex; j++) {
+                  const point = airwayPoints[j].trim();
+                  const fix = fixesData.find(f => f.startsWith(point));
+                  if (fix) {
+                    const [name, coords] = fix.split(' ');
+                    const [lat, lon] = coords.replace(/[()]/g, '').split(',');
+                    // (10) Push the waypoints
+                    waypoints.push({
+                      id: name,
+                      latitude: parseFloat(lat),
+                      longitude: parseFloat(lon)
+                    });
+                  }
+                }
+              }
+            }
+
+            //Not necessary to keep this.
+            airways.push({
+              name: element.airway,
+              type: element.airwayType,
+              details: airwayDetails
+            });
+          }
+        } catch (error) {
+          console.error(`Error fetching details for airway ${element.airway}:`, error);
         }
       }
     }
@@ -114,7 +165,8 @@ app.get('/api/flight-plan/:callsign', async (req, res) => {
     res.json({
       ...flight,
       waypoints,
-      airways: [...new Set(airways.map(a => a.name))] // Deduplicate airway names
+      airways: [...new Set(airways.map(a => a.name))], // Deduplicate airway names
+      airwayDetails: airways // Include detailed airway information
     });
 
   } catch (error) {
