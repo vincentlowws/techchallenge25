@@ -123,20 +123,3 @@ okabu not found in P756, so direct connect to OKABU
  start SALAX
  end BATAR
 
-
-Final Waypoints: [
-  {
-    "id": "VCBI",
-    "id": "KATTO",
-    "id": "SULEN",
-    "id": "NIXUL",
-    "id": "MABIX",
-    "id": "OKABU",
-    "id": "PEKDO",
-    "id": "SALAX",
-    "id": "BATAR",
-    "id": "OGAKO",
-    "id": "ARAMA",
-    "id": "WSSS",
-  }
-]

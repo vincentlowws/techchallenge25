@@ -13,8 +13,8 @@ const axiosInstance = axios.create({
 });
 
 // Variables to store static data
-let fixesData = null;
-let airwaysData = null;
+let fixesData = [];
+let airwaysData = [];
 
 // Function to fetch static data (fixes and airways)
 const fetchStaticData = async () => {
@@ -42,7 +42,7 @@ app.get('/healthcheck', (req, res) => {
 
 // Get all flight plans or search by callsign
 app.get('/api/flight-plans', async (req, res) => {
-  const { callsign } = req.query; // Get callsign from query parameter
+  const { callsign } = req.query;
 
   try {
     const response = await axiosInstance.get(
@@ -51,7 +51,6 @@ app.get('/api/flight-plans', async (req, res) => {
 
     let flightPlans = response.data;
 
-    // Filter flight plans by callsign if provided
     if (callsign) {
       flightPlans = flightPlans.filter(flight =>
         flight.aircraftIdentification.toLowerCase().includes(callsign.toLowerCase())
@@ -68,10 +67,9 @@ app.get('/api/flight-plans', async (req, res) => {
 // Get detailed flight plan with waypoints and airways
 app.get('/api/flight-plan/:callsign', async (req, res) => {
   const { callsign } = req.params;
-
   console.log("callsign--> " + callsign);
+
   try {
-    // (1) Fetch flight data
     const flightRes = await axiosInstance.get(
       'https://api.swimapisg.info/flight-manager/displayAll?apikey=b7bc6577-b73e-4b56-94b6-0d1569bce711'
     );
@@ -83,18 +81,15 @@ app.get('/api/flight-plan/:callsign', async (req, res) => {
     const airways = [];
     const route = flight.filedRoute.routeElement;
 
-    // (2) Process route elements e.g. FIX1 -> AIRWAY1 -> FIX2 -> AIRWAY2 -> FIX3
     for (let i = 0; i < route.length; i++) {
       const element = route[i];
 
-      // (3) Process fixes get the lat and lon
+      // Process fixes - Use exact match instead of startsWith
       if (element.position?.designatedPoint) {
-        const fix = fixesData.find(f => f.startsWith(element.position.designatedPoint));
+        const fix = fixesData.find(f => f.split(' ')[0] === element.position.designatedPoint);
         if (fix) {
           const [name, coords] = fix.split(' ');
           const [lat, lon] = coords.replace(/[()]/g, '').split(',');
-                
-          // (4) push the fix's lat lon
           waypoints.push({
             id: name,
             latitude: parseFloat(lat),
@@ -103,42 +98,31 @@ app.get('/api/flight-plan/:callsign', async (req, res) => {
         }
       }
 
-      // (5) Process airways, airwayType = NAMED
+      // Process airways
       if (element.airway && element.airwayType === "NAMED") {
         try {
-          // Fetch detailed airway information
           const airwayRes = await axiosInstance.get(
             `https://api.swimapisg.info/geopoints/search/airways/${element.airway}?apikey=b7bc6577-b73e-4b56-94b6-0d1569bce711`
           );
 
-          //(6) airway details consists of e.g. ["Z650: [MANRO,POGAV,MOLID,BCU,BUCSA,TOMET,RAROS,TGM,REBLA,
-          // EREDI,LUNAV,OBARA,RULES,NARKA,ABITU,BERVA,PEPIK,IVOLI,ROKEM,VEMUT,TIPAM,NIKUS,NOGRA,ERETO,
-          // TONSU,SULUS]"]
-
-          // TODO: Error Checking
-          const airwayDetails = airwayRes.data[0]; // Assuming the API returns an array with one element, 
+          const airwayDetails = airwayRes.data[0];
           if (airwayDetails) {
-            // Extract waypoints from the airway details
             const airwayPoints = airwayDetails.split(':')[1].replace(/[\[\]]/g, '').split(',');
 
-            // (7) Find the start and end fixes for the airway
-            const startFix = waypoints[waypoints.length - 1]?.id; // Last added fix
-            const endFix = route[i + 1]?.position?.designatedPoint; // Next fix in the route
+            const startFix = waypoints[waypoints.length - 1]?.id;
+            const endFix = route[i + 1]?.position?.designatedPoint;
 
             if (startFix && endFix) {
-              // (8) Find the indices of the start and end fixes in the airway details
               const startIndex = airwayPoints.indexOf(startFix.trim());
               const endIndex = airwayPoints.indexOf(endFix.trim());
 
               if (startIndex !== -1 && endIndex !== -1) {
-                // (9) Add the waypoints between the start and end fixes
                 for (let j = startIndex; j <= endIndex; j++) {
                   const point = airwayPoints[j].trim();
-                  const fix = fixesData.find(f => f.startsWith(point));
+                  const fix = fixesData.find(f => f.split(' ')[0] === point);
                   if (fix) {
                     const [name, coords] = fix.split(' ');
                     const [lat, lon] = coords.replace(/[()]/g, '').split(',');
-                    // (10) Push the waypoints
                     waypoints.push({
                       id: name,
                       latitude: parseFloat(lat),
@@ -149,7 +133,6 @@ app.get('/api/flight-plan/:callsign', async (req, res) => {
               }
             }
 
-            //Not necessary to keep this.
             airways.push({
               name: element.airway,
               type: element.airwayType,
@@ -164,12 +147,11 @@ app.get('/api/flight-plan/:callsign', async (req, res) => {
 
     console.log("Final Waypoints:", JSON.stringify(waypoints, null, 2));
 
-
     res.json({
       ...flight,
       waypoints,
-      airways: [...new Set(airways.map(a => a.name))], // Deduplicate airway names
-      airwayDetails: airways // Include detailed airway information
+      airways: [...new Set(airways.map(a => a.name))],
+      airwayDetails: airways
     });
 
   } catch (error) {
@@ -182,4 +164,4 @@ const PORT = 5001;
 const server = app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
 
 // Export the server for testing
-module.exports = {app, server} ;
+module.exports = { app, server };
