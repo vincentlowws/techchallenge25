@@ -20,8 +20,8 @@ let airwaysData = null;
 const fetchStaticData = async () => {
   try {
     const [fixesResponse, airwaysResponse] = await Promise.all([
-      axiosInstance.get('http://api.swimapisg.info:9080/geopoints/list/fixes?apikey=b7bc6577-b73e-4b56-94b6-0d1569bce711'),
-      axiosInstance.get('http://api.swimapisg.info:9080/geopoints/list/airways?apikey=b7bc6577-b73e-4b56-94b6-0d1569bce711')
+      axiosInstance.get('https://api.swimapisg.info/geopoints/list/fixes?apikey=b7bc6577-b73e-4b56-94b6-0d1569bce711'),
+      axiosInstance.get('https://api.swimapisg.info/geopoints/list/airways?apikey=b7bc6577-b73e-4b56-94b6-0d1569bce711')
     ]);
 
     fixesData = fixesResponse.data;
@@ -46,7 +46,7 @@ app.get('/api/flight-plans', async (req, res) => {
 
   try {
     const response = await axiosInstance.get(
-      'http://api.swimapisg.info:9080/flight-manager/displayAll?apikey=b7bc6577-b73e-4b56-94b6-0d1569bce711'
+      'https://api.swimapisg.info/flight-manager/displayAll?apikey=b7bc6577-b73e-4b56-94b6-0d1569bce711'
     );
 
     let flightPlans = response.data;
@@ -73,7 +73,7 @@ app.get('/api/flight-plan/:callsign', async (req, res) => {
   try {
     // Fetch flight data
     const flightRes = await axiosInstance.get(
-      'http://api.swimapisg.info:9080/flight-manager/displayAll?apikey=b7bc6577-b73e-4b56-94b6-0d1569bce711'
+      'https://api.swimapisg.info/flight-manager/displayAll?apikey=b7bc6577-b73e-4b56-94b6-0d1569bce711'
     );
 
     const flight = flightRes.data.find(f => f.aircraftIdentification === callsign);
