@@ -192,40 +192,40 @@ const App = () => {
     fetchRoute();
   }, [selectedFlight]);
 
-  // Animate plane movement
-  useEffect(() => {
-    if (!isMoving || !selectedFlight || !markerRef.current || !flightPath) return;
+  // // Animate plane movement
+  // useEffect(() => {
+  //   if (!isMoving || !selectedFlight || !markerRef.current || !flightPath) return;
 
-    const animate = () => {
-      if (currentWaypointIndex >= flightPath.length - 1) {
-        setIsMoving(false);
-        return;
-      }
+  //   const animate = () => {
+  //     if (currentWaypointIndex >= flightPath.length - 1) {
+  //       setIsMoving(false);
+  //       return;
+  //     }
 
-      const start = flightPath[currentWaypointIndex];
-      const end = flightPath[currentWaypointIndex + 1];
-      const steps = 100;
-      let step = 0;
+  //     const start = flightPath[currentWaypointIndex];
+  //     const end = flightPath[currentWaypointIndex + 1];
+  //     const steps = 100;
+  //     let step = 0;
 
-      const interval = setInterval(() => {
-        if (step >= steps) {
-          clearInterval(interval);
-          setCurrentWaypointIndex(i => i + 1);
-          return;
-        }
+  //     const interval = setInterval(() => {
+  //       if (step >= steps) {
+  //         clearInterval(interval);
+  //         setCurrentWaypointIndex(i => i + 1);
+  //         return;
+  //       }
 
-        const lng = start.longitude + 
-          (end.longitude - start.longitude) * (step / steps);
-        const lat = start.latitude + 
-          (end.latitude - start.latitude) * (step / steps);
+  //       const lng = start.longitude + 
+  //         (end.longitude - start.longitude) * (step / steps);
+  //       const lat = start.latitude + 
+  //         (end.latitude - start.latitude) * (step / steps);
         
-        markerRef.current.setLngLat([lng, lat]);
-        step++;
-      }, 50);
-    };
+  //       markerRef.current.setLngLat([lng, lat]);
+  //       step++;
+  //     }, 50);
+  //   };
 
-    animate();
-  }, [currentWaypointIndex, isMoving, selectedFlight, flightPath]);
+  //   animate();
+  // }, [currentWaypointIndex, isMoving, selectedFlight, flightPath]);
 
   return (
     <div>
