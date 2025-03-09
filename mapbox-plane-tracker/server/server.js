@@ -184,7 +184,7 @@ app.get('/api/flight-plan/:callsign', async (req, res) => {
       }
     }
 
-    console.log("Final Waypoints:", JSON.stringify(waypoints, null, 2));
+    // console.log("Final Waypoints:", JSON.stringify(waypoints, null, 2));
 
     res.json({
       ...flight,
