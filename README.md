@@ -5,7 +5,7 @@ Overview
 
 The Flight Route Viewer is a web application that visualizes flight paths using waypoints based on fixes and airways. It fetches flight data from an external API, processes it to extract waypoints and airways, and displays the flight route on an interactive map using Mapbox. The application is built with a Node.js backend and a React frontend, and it is deployed using GitHub Actions for CI/CD to AWS ECR and ECS.
 
-![screenshot](imageFolder/softwarecomponents.png)
+![screenshot](mapbox-plane-tracker/imageFolder/softwarecomponents.png)
 
 
 Features
