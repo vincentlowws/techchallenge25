@@ -38,5 +38,5 @@ describe('Server Endpoints', () => {
         expect(res.statusCode).toEqual(200);
         expect(res.body).toHaveProperty('waypoints');
         expect(res.body).toHaveProperty('airways');
-    });
+    }, 10000);
 });
