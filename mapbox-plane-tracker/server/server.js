@@ -20,8 +20,8 @@ let airwaysData = [];
 const fetchStaticData = async () => {
   try {
     const [fixesResponse, airwaysResponse] = await Promise.all([
-      axiosInstance.get('https://api.swimapisg.info/geopoints/list/fixes?apikey=b7bc6577-b73e-4b56-94b6-0d1569bce711'),
-      axiosInstance.get('https://api.swimapisg.info/geopoints/list/airways?apikey=b7bc6577-b73e-4b56-94b6-0d1569bce711')
+      axiosInstance.get(`${process.env.API_URL}/geopoints/list/fixes?apikey=${process.env.API_KEY}`),
+      axiosInstance.get(`${process.env.API_URL}/geopoints/list/airways?apikey=${process.env.API_KEY}`)
     ]);
 
     fixesData = fixesResponse.data;
@@ -46,7 +46,7 @@ app.get('/api/flight-plans', async (req, res) => {
 
   try {
     const response = await axiosInstance.get(
-      'https://api.swimapisg.info/flight-manager/displayAll?apikey=b7bc6577-b73e-4b56-94b6-0d1569bce711'
+      `${process.env.API_URL}/flight-manager/displayAll?apikey=${process.env.API_KEY}`
     );
 
     let flightPlans = response.data;
@@ -71,7 +71,7 @@ app.get('/api/flight-plan/:callsign', async (req, res) => {
 
   try {
     const flightRes = await axiosInstance.get(
-      'https://api.swimapisg.info/flight-manager/displayAll?apikey=b7bc6577-b73e-4b56-94b6-0d1569bce711'
+      `${process.env.API_URL}/flight-manager/displayAll?apikey=${process.env.API_KEY}`
     );
 
     const flight = flightRes.data.find(f => f.aircraftIdentification === callsign);
@@ -85,7 +85,7 @@ app.get('/api/flight-plan/:callsign', async (req, res) => {
     try {
       const departureAerodromeCode = flight.departure.departureAerodrome;
       const depAerodromeRes = await axiosInstance.get(
-        `https://api.swimapisg.info/geopoints/search/airports/${departureAerodromeCode}?apikey=b7bc6577-b73e-4b56-94b6-0d1569bce711`
+        `${process.env.API_URL}/geopoints/search/airports/${departureAerodromeCode}?apikey=${process.env.API_KEY}`
       );
       const depAerodromeData = depAerodromeRes.data[0]; // e.g., "VCBI (7.18,79.89)"
       if (depAerodromeData) {
@@ -123,7 +123,7 @@ app.get('/api/flight-plan/:callsign', async (req, res) => {
       if (element.airway && element.airwayType === "NAMED") {
         try {
           const airwayRes = await axiosInstance.get(
-            `https://api.swimapisg.info/geopoints/search/airways/${element.airway}?apikey=b7bc6577-b73e-4b56-94b6-0d1569bce711`
+            `${process.env.API_URL}/geopoints/search/airways/${element.airway}?apikey=${process.env.API_KEY}`
           );
 
           const airwayDetails = airwayRes.data[0];
@@ -199,7 +199,7 @@ app.get('/api/flight-plan/:callsign', async (req, res) => {
   }
 });
 
-const PORT = 5000;
+const PORT = process.env.PORT || 5001;
 const server = app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
 
 // Export the server for testing

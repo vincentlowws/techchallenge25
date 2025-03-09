@@ -20,7 +20,7 @@ const App = () => {
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const response = await axios.get('http://localhost:5000/api/flight-plans');
+        const response = await axios.get('http://localhost:5001/api/flight-plans');
         setFlightPlans(response.data);
         setFilteredFlightPlans(response.data);
       } catch (error) {
@@ -120,7 +120,7 @@ const App = () => {
     const fetchRoute = async () => {
       try {
         const response = await axios.get(
-          `http://localhost:5000/api/flight-plan/${selectedFlight}`
+          `http://localhost:5001/api/flight-plan/${selectedFlight}`
         );
         const { waypoints } = response.data;
 
