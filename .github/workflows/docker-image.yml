@@ -8,7 +8,10 @@ on:
 jobs:
   test:
     runs-on: ubuntu-latest
-
+    env:
+      API_KEY: ${{ secrets.API_KEY }}
+      API_URL: ${{ secrets.API_URL }}
+      PORT: ${{ secrets.PORT }}
     steps:
       - name: Checkout code
         uses: actions/checkout@v3
