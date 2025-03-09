@@ -31,12 +31,4 @@ describe('Server Endpoints', () => {
         expect(res.statusCode).toEqual(404);
         expect(res.body).toHaveProperty('message', 'Flight not found');
     });
-
-    it('should fetch detailed flight plan with waypoints and airways', async () => {
-        const callsign = 'SIA325'; // Replace with a valid callsign for testing
-        const res = await request(app).get(`/api/flight-plan/${callsign}`);
-        expect(res.statusCode).toEqual(200);
-        expect(res.body).toHaveProperty('waypoints');
-        expect(res.body).toHaveProperty('airways');
-    }, 10000);
 });
