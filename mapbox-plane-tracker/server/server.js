@@ -117,17 +117,35 @@ app.get('/api/flight-plan/:callsign', async (req, res) => {
               const endIndex = airwayPoints.indexOf(endFix.trim());
 
               if (startIndex !== -1 && endIndex !== -1) {
-                for (let j = startIndex; j <= endIndex; j++) {
-                  const point = airwayPoints[j].trim();
-                  const fix = fixesData.find(f => f.split(' ')[0] === point);
-                  if (fix) {
-                    const [name, coords] = fix.split(' ');
-                    const [lat, lon] = coords.replace(/[()]/g, '').split(',');
-                    waypoints.push({
-                      id: name,
-                      latitude: parseFloat(lat),
-                      longitude: parseFloat(lon)
-                    });
+                if (startIndex < endIndex) {
+                  // Traverse forward, excluding start and end
+                  for (let j = startIndex + 1; j < endIndex; j++) {
+                    const point = airwayPoints[j].trim();
+                    const airwayFix = fixesData.find(f => f.split(' ')[0] === point); // Find fix
+                    if (airwayFix) {
+                      const [name, coords] = airwayFix.split(' ');
+                      const [lat, lon] = coords.replace(/[()]/g, '').split(',');
+                      waypoints.push({
+                        id: name,
+                        latitude: parseFloat(lat),
+                        longitude: parseFloat(lon)
+                      });
+                    }
+                  }
+                } else if (startIndex > endIndex) {
+                  // Traverse backward, excluding start and end
+                  for (let j = startIndex - 1; j > endIndex; j--) {
+                    const point = airwayPoints[j].trim();
+                    const airwayFix = fixesData.find(f => f.split(' ')[0] === point); // Find fix
+                    if (airwayFix) {
+                      const [name, coords] = airwayFix.split(' ');
+                      const [lat, lon] = coords.replace(/[()]/g, '').split(',');
+                      waypoints.push({
+                        id: name,
+                        latitude: parseFloat(lat),
+                        longitude: parseFloat(lon)
+                      });
+                    }
                   }
                 }
               }
@@ -160,7 +178,7 @@ app.get('/api/flight-plan/:callsign', async (req, res) => {
   }
 });
 
-const PORT = 5001;
+const PORT = 5000;
 const server = app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
 
 // Export the server for testing
