@@ -79,7 +79,7 @@ app.get('/api/flight-plan/:callsign', async (req, res) => {
 
     const waypoints = [];
     const airways = [];
-    const route = flight.filedRoute.routeElement;
+    const route = flight.filedRoute?.routeElement || []; //there will be cases with no routeElement messageType = DEP instead of FPL
 
     // Add DEPARTURE aerodrome as first waypoint
     try {
@@ -102,89 +102,114 @@ app.get('/api/flight-plan/:callsign', async (req, res) => {
       console.error('Error fetching departure aerodrome:', error);
     }
 
-    for (let i = 0; i < route.length; i++) {
-      const element = route[i];
+    if (flight.filedRoute) {
+      for (let i = 0; i < route.length; i++) {
+        const element = route[i];
 
-      // Process fixes - Use exact match instead of startsWith
-      if (element.position?.designatedPoint) {
-        const fix = fixesData.find(f => f.split(' ')[0] === element.position.designatedPoint);
-        if (fix) {
-          const [name, coords] = fix.split(' ');
-          const [lat, lon] = coords.replace(/[()]/g, '').split(',');
-          waypoints.push({
-            id: name,
-            latitude: parseFloat(lat),
-            longitude: parseFloat(lon)
-          });
+        // Process fixes - Use exact match instead of startsWith
+        if (element.position?.designatedPoint) {
+          const fix = fixesData.find(f => f.split(' ')[0] === element.position.designatedPoint);
+          if (fix) {
+            const [name, coords] = fix.split(' ');
+            const [lat, lon] = coords.replace(/[()]/g, '').split(',');
+            waypoints.push({
+              id: name,
+              latitude: parseFloat(lat),
+              longitude: parseFloat(lon)
+            });
+          }
         }
-      }
 
-      // Process airways
-      if (element.airway && element.airwayType === "NAMED") {
-        try {
-          const airwayRes = await axiosInstance.get(
-            `${process.env.API_URL}/geopoints/search/airways/${element.airway}?apikey=${process.env.API_KEY}`
-          );
+        // Process airways
+        if (element.airway && element.airwayType === "NAMED") {
+          try {
+            const airwayRes = await axiosInstance.get(
+              `${process.env.API_URL}/geopoints/search/airways/${element.airway}?apikey=${process.env.API_KEY}`
+            );
 
-          const airwayDetails = airwayRes.data[0];
-          if (airwayDetails) {
-            const airwayPoints = airwayDetails.split(':')[1].replace(/[\[\]]/g, '').split(',');
+            const airwayDetails = airwayRes.data[0];
+            if (airwayDetails) {
+              const airwayPoints = airwayDetails.split(':')[1].replace(/[\[\]]/g, '').split(',');
 
-            const startFix = waypoints[waypoints.length - 1]?.id;
-            const endFix = route[i + 1]?.position?.designatedPoint;
+              const startFix = waypoints[waypoints.length - 1]?.id;
+              const endFix = route[i + 1]?.position?.designatedPoint;
 
-            if (startFix && endFix) {
-              const startIndex = airwayPoints.indexOf(startFix.trim());
-              const endIndex = airwayPoints.indexOf(endFix.trim());
+              if (startFix && endFix) {
+                const startIndex = airwayPoints.indexOf(startFix.trim());
+                const endIndex = airwayPoints.indexOf(endFix.trim());
 
-              if (startIndex !== -1 && endIndex !== -1) {
-                if (startIndex < endIndex) {
-                  // Traverse forward, excluding start and end
-                  for (let j = startIndex + 1; j < endIndex; j++) {
-                    const point = airwayPoints[j].trim();
-                    const airwayFix = fixesData.find(f => f.split(' ')[0] === point); // Find fix
-                    if (airwayFix) {
-                      const [name, coords] = airwayFix.split(' ');
-                      const [lat, lon] = coords.replace(/[()]/g, '').split(',');
-                      waypoints.push({
-                        id: name,
-                        latitude: parseFloat(lat),
-                        longitude: parseFloat(lon)
-                      });
+                if (startIndex !== -1 && endIndex !== -1) {
+                  if (startIndex < endIndex) {
+                    // Traverse forward, excluding start and end
+                    for (let j = startIndex + 1; j < endIndex; j++) {
+                      const point = airwayPoints[j].trim();
+                      const airwayFix = fixesData.find(f => f.split(' ')[0] === point); // Find fix
+                      if (airwayFix) {
+                        const [name, coords] = airwayFix.split(' ');
+                        const [lat, lon] = coords.replace(/[()]/g, '').split(',');
+                        waypoints.push({
+                          id: name,
+                          latitude: parseFloat(lat),
+                          longitude: parseFloat(lon)
+                        });
+                      }
                     }
-                  }
-                } else if (startIndex > endIndex) {
-                  // Traverse backward, excluding start and end
-                  for (let j = startIndex - 1; j > endIndex; j--) {
-                    const point = airwayPoints[j].trim();
-                    const airwayFix = fixesData.find(f => f.split(' ')[0] === point); // Find fix
-                    if (airwayFix) {
-                      const [name, coords] = airwayFix.split(' ');
-                      const [lat, lon] = coords.replace(/[()]/g, '').split(',');
-                      waypoints.push({
-                        id: name,
-                        latitude: parseFloat(lat),
-                        longitude: parseFloat(lon)
-                      });
+                  } else if (startIndex > endIndex) {
+                    // Traverse backward, excluding start and end
+                    for (let j = startIndex - 1; j > endIndex; j--) {
+                      const point = airwayPoints[j].trim();
+                      const airwayFix = fixesData.find(f => f.split(' ')[0] === point); // Find fix
+                      if (airwayFix) {
+                        const [name, coords] = airwayFix.split(' ');
+                        const [lat, lon] = coords.replace(/[()]/g, '').split(',');
+                        waypoints.push({
+                          id: name,
+                          latitude: parseFloat(lat),
+                          longitude: parseFloat(lon)
+                        });
+                      }
                     }
                   }
                 }
               }
-            }
 
-            airways.push({
-              name: element.airway,
-              type: element.airwayType,
-              details: airwayDetails
-            });
+
+
+              airways.push({
+                name: element.airway,
+                type: element.airwayType,
+                details: airwayDetails
+              });
+            }
+          } catch (error) {
+            console.error(`Error fetching details for airway ${element.airway}:`, error);
           }
-        } catch (error) {
-          console.error(`Error fetching details for airway ${element.airway}:`, error);
         }
       }
     }
 
-    // console.log("Final Waypoints:", JSON.stringify(waypoints, null, 2));
+    // Add ARRIVAL aerodrome as last waypoint
+    try {
+      const arrivalAerodromeCode = flight.arrival.destinationAerodrome;
+      const arrAerodromeRes = await axiosInstance.get(
+        `${process.env.API_URL}/geopoints/search/airports/${arrivalAerodromeCode}?apikey=${process.env.API_KEY}`
+      );
+      const arrAerodromeData = arrAerodromeRes.data[0];
+      if (arrAerodromeData) {
+        const [name, coordsPart] = arrAerodromeData.split(' ');
+        const coords = coordsPart.replace(/[()]/g, '');
+        const [lat, lon] = coords.split(',');
+        waypoints.push({
+          id: name,
+          latitude: parseFloat(lat),
+          longitude: parseFloat(lon)
+        });
+      }
+    } catch (error) {
+      console.error('Error fetching arrival aerodrome:', error);
+    }
+
+    console.log("Final Waypoints:", JSON.stringify(waypoints, null, 2));
 
     res.json({
       ...flight,

@@ -146,3 +146,112 @@ okabu not found in P756, so direct connect to OKABU
 
  [6] ARAMA 
  Final
+
+
+
+
+     {
+        "_id": "66eae75f1fee5ea33feac2bc",
+        "messageType": "FPL",
+        "aircraftIdentification": "SIA951",
+        "filedRoute": {
+            "flightRuleCategory": "I",
+            "cruisingSpeed": "0.83 M",
+            "cruisingLevel": "380 F",
+            "routeText": "DOLTA2B DOLTA G579 REPOV",
+            "routeElement": [
+                {
+                    "airwayType": "SID",
+                    "airway": "DOLTA2B",
+                    "seqNum": 0
+                },
+                {
+                    "position": {
+                        "designatedPoint": "DOLTA"
+                    },
+                    "seqNum": 1,
+                    "airway": "G579",
+                    "airwayType": "NAMED"
+                },
+                {
+                    "position": {
+                        "designatedPoint": "REPOV"
+                    },
+                    "seqNum": 2,
+                    "airwayType": "NAMED"
+                }
+            ],
+            "totalEstimatedElapsedTime": "01:16:00",
+            "otherEstimatedElapsedTime": [
+                "WSJC0054"
+            ]
+        },
+        "flightType": "S",
+        "aircraft": {
+            "aircraftType": "B772",
+            "wakeTurbulence": "H",
+            "communication": {
+                "communicationCapabilityCode": [
+                    "E1",
+                    "E2",
+                    "E3",
+                    "H",
+                    "M1",
+                    "Y"
+                ],
+                "dataLinkCapabilityCode": [
+                    "J3",
+                    "J5"
+                ],
+                "otherDataLinkCapabilities": "CPDLCX",
+                "selectiveCallingCode": "LSGQ"
+            },
+            "navigation": {
+                "navigationCapabilitiesCode": [
+                    "D",
+                    "F",
+                    "G",
+                    "I",
+                    "W",
+                    "X"
+                ],
+                "performanceBasedCode": [
+                    "A1",
+                    "B1",
+                    "C1",
+                    "D1",
+                    "L1",
+                    "O1",
+                    "S2"
+                ],
+                "otherNavigationCapabilities": "RNP2"
+            },
+            "standardCapabilities": "S",
+            "surveillanceCapabilitiesCodes": [
+                "B1",
+                "D1",
+                "L"
+            ],
+            "aircraftRegistration": "9VSVC",
+            "aircraftAddress": "76CEC3",
+            "aircraftApproachCategory": "D"
+        },
+        "departure": {
+            "departureAerodrome": "WIII",
+            "estimatedOffBLockTime": "19:25:00",
+            "dateOfFlight": "2024-09-18",
+            "timeOfFlight": 1726687500
+        },
+        "arrival": {
+            "destinationAerodrome": "WSSS",
+            "alternativeAerodrome": [
+                "WSAP"
+            ],
+            "timeOfArrival": 1726692060
+        },
+        "aircraftOperating": "SIA",
+        "remark": "ACASII  EQUIPPED TCAS",
+        "receptionTime": "2024-09-18T14:13:32.024Z",
+        "src": "AFTN",
+        "lastUpdatedTimeStamp": "2024-09-18T14:44:47.551Z"
+    },
