@@ -14,15 +14,15 @@ const App = () => {
   const [currentWaypointIndex, setCurrentWaypointIndex] = useState(0);
   const [isMoving, setIsMoving] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
-  const [flightPath, setFlightPath] = useState(null); // Store flight path
+  const [flightPath, setFlightPath] = useState(null);
 
   // Fetch flight plans
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const response = await axios.get('http://localhost:5001/api/flight-plans');
+        const response = await axios.get('http://localhost:5000/api/flight-plans');
         setFlightPlans(response.data);
-        setFilteredFlightPlans(response.data); // Initialize filtered flight plans
+        setFilteredFlightPlans(response.data);
       } catch (error) {
         console.error('Error fetching flight plans:', error);
       }
@@ -38,7 +38,7 @@ const App = () => {
       );
       setFilteredFlightPlans(filtered);
     } else {
-      setFilteredFlightPlans(flightPlans); // Reset to all flight plans if search query is empty
+      setFilteredFlightPlans(flightPlans);
     }
   }, [searchQuery, flightPlans]);
 
@@ -81,18 +81,31 @@ const App = () => {
           paint: { 'circle-radius': 5, 'circle-color': '#007AFF' }
         });
 
-        // Airway labels source
-        map.addSource('airway-labels', {
+        // Waypoint labels source
+        map.addSource('waypoint-labels', {
           type: 'geojson',
           data: { type: 'FeatureCollection', features: [] }
         });
 
         map.addLayer({
-          id: 'airway-labels',
+          id: 'waypoint-labels',
           type: 'symbol',
-          source: 'airway-labels',
-          layout: { 'text-field': ['get', 'airway'], 'text-size': 12 },
-          paint: { 'text-color': '#FF0000' }
+          source: 'waypoint-labels',
+          layout: { 'text-field': ['get', 'id'], 'text-size': 12, 'text-offset': [0, 1] },
+          paint: { 'text-color': '#FFFFFF', 'text-halo-color': '#000000', 'text-halo-width': 2 }
+        });
+
+        // Start and departure aerodrome source
+        map.addSource('aerodromes', {
+          type: 'geojson',
+          data: { type: 'FeatureCollection', features: [] }
+        });
+
+        map.addLayer({
+          id: 'aerodromes',
+          type: 'circle',
+          source: 'aerodromes',
+          paint: { 'circle-radius': 8, 'circle-color': '#FF0000' }
         });
       });
 
@@ -107,9 +120,9 @@ const App = () => {
     const fetchRoute = async () => {
       try {
         const response = await axios.get(
-          `http://localhost:5001/api/flight-plan/${selectedFlight}`
+          `http://localhost:5000/api/flight-plan/${selectedFlight}`
         );
-        const { waypoints, airways } = response.data;
+        const { waypoints } = response.data;
 
         // Store flight path in state
         setFlightPath(waypoints);
@@ -129,6 +142,35 @@ const App = () => {
             geometry: { type: 'Point', coordinates: [w.longitude, w.latitude] },
             properties: { id: w.id }
           }))
+        });
+
+        // Update waypoint labels
+        mapRef.current.getSource('waypoint-labels').setData({
+          type: 'FeatureCollection',
+          features: waypoints.map(w => ({
+            type: 'Feature',
+            geometry: { type: 'Point', coordinates: [w.longitude, w.latitude] },
+            properties: { id: w.id }
+          }))
+        });
+
+        // Highlight start and departure aerodromes
+        const startAerodrome = waypoints[0];
+        const departureAerodrome = waypoints[waypoints.length - 1];
+        mapRef.current.getSource('aerodromes').setData({
+          type: 'FeatureCollection',
+          features: [
+            {
+              type: 'Feature',
+              geometry: { type: 'Point', coordinates: [startAerodrome.longitude, startAerodrome.latitude] },
+              properties: { id: 'Start' }
+            },
+            {
+              type: 'Feature',
+              geometry: { type: 'Point', coordinates: [departureAerodrome.longitude, departureAerodrome.latitude] },
+              properties: { id: 'Departure' }
+            }
+          ]
         });
 
         // Add plane marker

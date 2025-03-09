@@ -81,6 +81,27 @@ app.get('/api/flight-plan/:callsign', async (req, res) => {
     const airways = [];
     const route = flight.filedRoute.routeElement;
 
+    // Add DEPARTURE aerodrome as first waypoint
+    try {
+      const departureAerodromeCode = flight.departure.departureAerodrome;
+      const depAerodromeRes = await axiosInstance.get(
+        `https://api.swimapisg.info/geopoints/search/airports/${departureAerodromeCode}?apikey=b7bc6577-b73e-4b56-94b6-0d1569bce711`
+      );
+      const depAerodromeData = depAerodromeRes.data[0]; // e.g., "VCBI (7.18,79.89)"
+      if (depAerodromeData) {
+        const [name, coordsPart] = depAerodromeData.split(' ');
+        const coords = coordsPart.replace(/[()]/g, '');
+        const [lat, lon] = coords.split(',');
+        waypoints.push({
+          id: name,
+          latitude: parseFloat(lat),
+          longitude: parseFloat(lon)
+        });
+      }
+    } catch (error) {
+      console.error('Error fetching departure aerodrome:', error);
+    }
+
     for (let i = 0; i < route.length; i++) {
       const element = route[i];
 
