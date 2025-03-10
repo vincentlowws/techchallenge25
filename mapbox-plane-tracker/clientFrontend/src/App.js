@@ -3,7 +3,7 @@ import mapboxgl from 'mapbox-gl';
 import axios from 'axios';
 import 'mapbox-gl/dist/mapbox-gl.css';
 
-mapboxgl.accessToken = process.env.REACT_APP_MAPBOX_ACCESS_TOKEN;
+mapboxgl.accessToken = 'pk.eyJ1IjoidG5lY25pdiIsImEiOiJjbDI1eG9hZGUwMDd5M2xwd3poOGI4dG53In0.C9Mw9x7e-QpHpD5gOuQ2Eg';
 
 const App = () => {
   const mapRef = useRef(null);
@@ -16,13 +16,11 @@ const App = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [flightPath, setFlightPath] = useState(null);
 
-  const API_BASE_URL = process.env.REACT_APP_API_BASE_URL;
-
   // Fetch flight plans
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const response = await axios.get(`${API_BASE_URL}/api/flight-plans`);
+        const response = await axios.get('http://localhost:5001/api/flight-plans');
         setFlightPlans(response.data);
         setFilteredFlightPlans(response.data);
       } catch (error) {
@@ -30,7 +28,7 @@ const App = () => {
       }
     };
     fetchData();
-  }, [API_BASE_URL]);
+  }, []);
 
   // Filter flight plans based on search query
   useEffect(() => {
@@ -57,6 +55,7 @@ const App = () => {
       });
 
       map.on('load', () => {
+        // Route source
         map.addSource('route', {
           type: 'geojson',
           data: { type: 'Feature', geometry: { type: 'LineString', coordinates: [] } }
@@ -67,6 +66,46 @@ const App = () => {
           type: 'line',
           source: 'route',
           paint: { 'line-color': '#007AFF', 'line-width': 2 }
+        });
+
+        // Waypoints source
+        map.addSource('waypoints', {
+          type: 'geojson',
+          data: { type: 'FeatureCollection', features: [] }
+        });
+
+        map.addLayer({
+          id: 'waypoints',
+          type: 'circle',
+          source: 'waypoints',
+          paint: { 'circle-radius': 5, 'circle-color': '#007AFF' }
+        });
+
+        // Waypoint labels source
+        map.addSource('waypoint-labels', {
+          type: 'geojson',
+          data: { type: 'FeatureCollection', features: [] }
+        });
+
+        map.addLayer({
+          id: 'waypoint-labels',
+          type: 'symbol',
+          source: 'waypoint-labels',
+          layout: { 'text-field': ['get', 'id'], 'text-size': 12, 'text-offset': [0, 1] },
+          paint: { 'text-color': '#FFFFFF', 'text-halo-color': '#000000', 'text-halo-width': 2 }
+        });
+
+        // Start and departure aerodrome source
+        map.addSource('aerodromes', {
+          type: 'geojson',
+          data: { type: 'FeatureCollection', features: [] }
+        });
+
+        map.addLayer({
+          id: 'aerodromes',
+          type: 'circle',
+          source: 'aerodromes',
+          paint: { 'circle-radius': 8, 'circle-color': '#FF0000' }
         });
       });
 
@@ -80,29 +119,113 @@ const App = () => {
 
     const fetchRoute = async () => {
       try {
-        const response = await axios.get(`${API_BASE_URL}/api/flight-plan/${selectedFlight}`);
+        const response = await axios.get(
+          `http://localhost:5001/api/flight-plan/${selectedFlight}`
+        );
         const { waypoints } = response.data;
 
+        // Store flight path in state
         setFlightPath(waypoints);
+
+        // Update route
         const coordinates = waypoints.map(w => [w.longitude, w.latitude]);
         mapRef.current.getSource('route').setData({
           type: 'Feature',
           geometry: { type: 'LineString', coordinates }
         });
 
+        // Update waypoints
+        mapRef.current.getSource('waypoints').setData({
+          type: 'FeatureCollection',
+          features: waypoints.map(w => ({
+            type: 'Feature',
+            geometry: { type: 'Point', coordinates: [w.longitude, w.latitude] },
+            properties: { id: w.id }
+          }))
+        });
+
+        // Update waypoint labels
+        mapRef.current.getSource('waypoint-labels').setData({
+          type: 'FeatureCollection',
+          features: waypoints.map(w => ({
+            type: 'Feature',
+            geometry: { type: 'Point', coordinates: [w.longitude, w.latitude] },
+            properties: { id: w.id }
+          }))
+        });
+
+        // Highlight start and departure aerodromes
+        const startAerodrome = waypoints[0];
+        const departureAerodrome = waypoints[waypoints.length - 1];
+        mapRef.current.getSource('aerodromes').setData({
+          type: 'FeatureCollection',
+          features: [
+            {
+              type: 'Feature',
+              geometry: { type: 'Point', coordinates: [startAerodrome.longitude, startAerodrome.latitude] },
+              properties: { id: 'Start' }
+            },
+            {
+              type: 'Feature',
+              geometry: { type: 'Point', coordinates: [departureAerodrome.longitude, departureAerodrome.latitude] },
+              properties: { id: 'Departure' }
+            }
+          ]
+        });
+
+        // Add plane marker
         if (markerRef.current) markerRef.current.remove();
-        const marker = new mapboxgl.Marker().setLngLat(coordinates[0]).addTo(mapRef.current);
+        const marker = new mapboxgl.Marker()
+          .setLngLat(coordinates[0])
+          .addTo(mapRef.current);
         markerRef.current = marker;
 
+        // Start animation
         setIsMoving(true);
         setCurrentWaypointIndex(0);
+
       } catch (error) {
         console.error('Error loading flight route:', error);
       }
     };
 
     fetchRoute();
-  }, [selectedFlight, API_BASE_URL]);
+  }, [selectedFlight]);
+
+  // // Animate plane movement
+  // useEffect(() => {
+  //   if (!isMoving || !selectedFlight || !markerRef.current || !flightPath) return;
+
+  //   const animate = () => {
+  //     if (currentWaypointIndex >= flightPath.length - 1) {
+  //       setIsMoving(false);
+  //       return;
+  //     }
+
+  //     const start = flightPath[currentWaypointIndex];
+  //     const end = flightPath[currentWaypointIndex + 1];
+  //     const steps = 100;
+  //     let step = 0;
+
+  //     const interval = setInterval(() => {
+  //       if (step >= steps) {
+  //         clearInterval(interval);
+  //         setCurrentWaypointIndex(i => i + 1);
+  //         return;
+  //       }
+
+  //       const lng = start.longitude + 
+  //         (end.longitude - start.longitude) * (step / steps);
+  //       const lat = start.latitude + 
+  //         (end.latitude - start.latitude) * (step / steps);
+        
+  //       markerRef.current.setLngLat([lng, lat]);
+  //       step++;
+  //     }, 50);
+  //   };
+
+  //   animate();
+  // }, [currentWaypointIndex, isMoving, selectedFlight, flightPath]);
 
   return (
     <div>
