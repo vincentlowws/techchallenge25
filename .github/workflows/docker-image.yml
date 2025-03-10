@@ -1,3 +1,4 @@
+# GitHub Actions Workflow
 name: Build and Push Docker Images
 
 on:
@@ -15,11 +16,11 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v3
-
+      
       - name: Set up Node.js
         uses: actions/setup-node@v3
         with:
-          node-version: '16' # Use the appropriate Node.js version for your project
+          node-version: '16'
 
       - name: Install dependencies
         run: |
@@ -30,10 +31,10 @@ jobs:
         run: |
           cd mapbox-plane-tracker/server
           npm test
-    
+  
   build-and-push:  
     runs-on: ubuntu-latest
-    needs: test # Ensure the build job runs only if tests pass
+    needs: test 
 
     steps:
       - name: Checkout code
@@ -56,13 +57,16 @@ jobs:
           aws ecr get-login-password --region ${{ secrets.AWS_REGION }} | docker login --username AWS --password-stdin ${{ secrets.ECR_REPOSITORY_CLIENT }}
           aws ecr get-login-password --region ${{ secrets.AWS_REGION }} | docker login --username AWS --password-stdin ${{ secrets.ECR_REPOSITORY_SERVER }}
 
-      # Build and Tag Client Image
       - name: Build and Tag Client Docker Image
         run: |
-          docker build -t tc_client:latest -f mapbox-plane-tracker/clientFrontend/Dockerfile mapbox-plane-tracker/clientFrontend
+          docker build \
+            --build-arg REACT_APP_MAPBOX_ACCESS_TOKEN=${{ secrets.MAPBOX_ACCESS_TOKEN }} \
+            --build-arg REACT_APP_API_BASE_URL=${{ secrets.API_URL }} \
+            -t tc_client:latest \
+            -f mapbox-plane-tracker/clientFrontend/Dockerfile \
+            mapbox-plane-tracker/clientFrontend
           docker tag tc_client:latest ${{ secrets.ECR_REPOSITORY_CLIENT }}:latest
 
-      # Build and Tag Server Image
       - name: Build and Tag Server Docker Image
         run: |
           docker build -t tc_server:latest -f mapbox-plane-tracker/server/Dockerfile mapbox-plane-tracker/server
