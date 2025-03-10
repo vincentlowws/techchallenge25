@@ -1,48 +1,49 @@
 # techchallenge25
 
-Flight Route Viewer
-Overview
+**Flight Route Viewer**
+*Overview*
 
 The Flight Route Viewer is a web application that visualizes flight paths using waypoints based on fixes and airways. It fetches flight data from an external API, processes it to extract waypoints and airways, and displays the flight route on an interactive map using Mapbox. The application is built with a Node.js backend and a React frontend, and it is deployed using GitHub Actions for CI/CD to AWS ECR and ECS.
 
-![screenshot](mapbox-plane-tracker/imageFolder/softwarecomponents.png)
 
+---
 
-Features
+*Features*
 
 Flight Plan Search: Search for flight plans by callsign.
 Flight Route Visualization: Display the flight route on an interactive map with waypoints and airways.
 Dynamic Updates: Automatically update the map when a new flight is selected.
 CI/CD Pipeline: Automated build, test, and deployment using GitHub Actions to AWS ECR and ECS.
-Architecture
+
+---
+
+*Architecture*
+![screenshot](mapbox-plane-tracker/imageFolder/softwarecomponents.png)
 
 The application consists of the following components:
 
 Backend (Node.js/Express):
-Fetches flight data from an external API.
-Processes the data to extract waypoints and airways.
-Provides RESTful endpoints for the frontend to fetch flight plans and detailed flight routes.
+    Fetches flight data from an external API.
+    Processes the data to extract waypoints and airways.
+    Provides RESTful endpoints for the frontend to fetch flight plans and detailed flight routes.
+
 Frontend (React):
-Displays the flight route on an interactive map using Mapbox.
-Allows users to search for flight plans and select a flight to visualize its route.
+    Displays the flight route on an interactive map using Mapbox.
+    Allows users to search for flight plans and select a flight to visualize its route.
+
+---
+*CI/CD*
 CI/CD Pipeline (GitHub Actions):
 Automates the build, test, and deployment process.
 Builds Docker images for the client and server.
 Pushes the Docker images to AWS ECR.
 Deploys the application to AWS ECS.
-Diagram
 
-plaintext
-Copy
-+-------------------+       +-------------------+       +-------------------+
-|                   |       |                   |       |                   |
-|   GitHub Repo     |       |   GitHub Actions  |       |   AWS ECR/ECS     |
-|                   |       |                   |       |                   |
-|   - Client Code   | ----> |   - Build & Test  | ----> |   - Docker Images  |
-|   - Server Code   |       |   - Push to ECR   |       |   - Deploy to ECS  |
-|                   |       |                   |       |                   |
-+-------------------+       +-------------------+       +-------------------+
-Getting Started
+Diagram
+![screenshot](mapbox-plane-tracker/imageFolder/cicd.png)
+
+---
+*Getting Started*
 
 Prerequisites
 
