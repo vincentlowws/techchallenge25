@@ -1,121 +1,133 @@
-# techchallenge25
-
-**Flight Route Viewer**
-*Overview*
+# Flight Route Viewer 🛩️
 
 The Flight Route Viewer is a web application that visualizes flight paths using waypoints based on fixes and airways. It fetches flight data from an external API, processes it to extract waypoints and airways, and displays the flight route on an interactive map using Mapbox. The application is built with a Node.js backend and a React frontend, and it is deployed using GitHub Actions for CI/CD to AWS ECR and ECS.
 
+## Features
 
----
+- **Flight Plan Search**: Search for flight plans by callsign.
+- **Flight Route Visualization**: Display the flight route on an interactive map with waypoints and airways.
+- **Dynamic Updates**: Automatically update the map when a new flight is selected.
+- **CI/CD Pipeline**: Automated build, test, and deployment using GitHub Actions to AWS ECR and ECS.
 
-*Features*
+## Architecture
 
-Flight Plan Search: Search for flight plans by callsign.
-Flight Route Visualization: Display the flight route on an interactive map with waypoints and airways.
-Dynamic Updates: Automatically update the map when a new flight is selected.
-CI/CD Pipeline: Automated build, test, and deployment using GitHub Actions to AWS ECR and ECS.
-
----
-
-*Architecture*
-![screenshot](mapbox-plane-tracker/imageFolder/softwarecomponents.png)
+![Architecture Diagram](mapbox-plane-tracker/imageFolder/softwarecomponents.png)
 
 The application consists of the following components:
 
-Backend (Node.js/Express):
-    Fetches flight data from an external API.
-    Processes the data to extract waypoints and airways.
-    Provides RESTful endpoints for the frontend to fetch flight plans and detailed flight routes.
+### Backend (Node.js/Express)
+- Fetches flight data from an external API.
+- Processes the data to extract waypoints and airways.
+- Provides RESTful endpoints for the frontend to fetch flight plans and detailed flight routes.
 
-Frontend (React):
-    Displays the flight route on an interactive map using Mapbox.
-    Allows users to search for flight plans and select a flight to visualize its route.
+### Frontend (React)
+- Displays the flight route on an interactive map using Mapbox.
+- Allows users to search for flight plans and select a flight to visualize its route.
 
----
-*CI/CD*
-CI/CD Pipeline (GitHub Actions):
-Automates the build, test, and deployment process.
-Builds Docker images for the client and server.
-Pushes the Docker images to AWS ECR.
-Deploys the application to AWS ECS.
+## CI/CD Pipeline
 
-Diagram
-![screenshot](mapbox-plane-tracker/imageFolder/cicd.png)
+The CI/CD pipeline is managed using GitHub Actions:
+- Automates the build, test, and deployment process.
+- Builds Docker images for the client and server.
+- Pushes the Docker images to AWS ECR.
+- Deploys the application to AWS ECS.
 
----
-*Getting Started*
+### CI/CD Pipeline Diagram
 
-Prerequisites
+![CI/CD Diagram](mapbox-plane-tracker/imageFolder/cicd.png)
 
-Node.js (v16 or higher)
-Docker
-AWS account with ECR and ECS configured
-Mapbox access token
-Installation
+## Getting Started
 
-Clone the repository:
-bash
-Copy
+### Prerequisites
+
+Ensure you have the following installed:
+
+- Node.js (v16 or higher)
+- Docker
+- AWS account with ECR and ECS configured
+- Mapbox access token
+
+### Installation
+
+#### Clone the repository:
+```bash
 git clone https://github.com/your-username/flight-route-viewer.git
 cd flight-route-viewer
-Install dependencies:
-bash
-Copy
+```
+
+#### Install dependencies:
+```bash
 cd server
 npm install
 cd ../client
 npm install
-Set up environment variables:
-Create a .env file in the server directory with the following content:
-plaintext
-Copy
-API_KEY=your_api_key
-API_URL=your_api_url
-PORT=5001
-Create a .env file in the client directory with the following content:
-plaintext
-Copy
-REACT_APP_MAPBOX_ACCESS_TOKEN=your_mapbox_access_token
-Run the application:
-Start the server:
-bash
-Copy
+```
+
+#### Set up environment variables:
+
+1. Create a `.env` file in the `server` directory with the following content:
+   ```plaintext
+   API_KEY=your_api_key
+   API_URL=your_api_url
+   PORT=5001
+   ```
+
+2. Create a `.env` file in the `client` directory with the following content:
+   ```plaintext
+   REACT_APP_MAPBOX_ACCESS_TOKEN=your_mapbox_access_token
+   ```
+
+### Run the Application
+
+#### Start the server:
+```bash
 cd server
 npm start
-Start the client:
-bash
-Copy
+```
+
+#### Start the client:
+```bash
 cd client
 npm start
-Access the application:
-Open your browser and navigate to http://localhost:3000.
-Deployment
+```
 
-The application is automatically deployed to AWS ECR and ECS using GitHub Actions. The CI/CD pipeline is triggered on every push to the main branch.
+#### Access the application:
+Open your browser and navigate to `http://localhost:3000`.
 
-Set up AWS credentials:
+## Deployment
+
+The application is automatically deployed to AWS ECR and ECS using GitHub Actions. The CI/CD pipeline is triggered on every push to the `main` branch.
+
+### Set up AWS credentials:
 Add the following secrets to your GitHub repository:
-AWS_ACCESS_KEY_ID
-AWS_SECRET_ACCESS_KEY
-AWS_REGION
-ECR_REPOSITORY_CLIENT
-ECR_REPOSITORY_SERVER
-Push to main branch:
-Push your changes to the main branch to trigger the CI/CD pipeline.
-Monitor deployment:
-Check the GitHub Actions tab in your repository to monitor the build and deployment process.
-Code Structure
 
-Backend
+- `AWS_ACCESS_KEY_ID`
+- `AWS_SECRET_ACCESS_KEY`
+- `AWS_REGION`
+- `ECR_REPOSITORY_CLIENT`
+- `ECR_REPOSITORY_SERVER`
 
-server.js: Main server file that sets up the Express app and defines the API endpoints.
-fetchStaticData.js: Fetches static data (fixes and airways) from the external API.
-routes/: Contains the route handlers for the API endpoints.
-Frontend
+### Push to main branch:
+Push your changes to the `main` branch to trigger the CI/CD pipeline.
 
-App.js: Main React component that handles the UI and interacts with the backend.
-mapbox-gl.css: Styles for the Mapbox map.
-components/: Contains reusable React components.
-CI/CD
+### Monitor deployment:
+Check the **GitHub Actions** tab in your repository to monitor the build and deployment process.
 
-.github/workflows/ci-cd.yml: GitHub Actions workflow file that defines the CI/CD pipeline.
+## Code Structure
+
+### Backend
+- `server.js` - Main server file that sets up the Express app and defines the API endpoints.
+- `fetchStaticData.js` - Fetches static data (fixes and airways) from the external API.
+- `routes/` - Contains the route handlers for the API endpoints.
+
+### Frontend
+- `App.js` - Main React component that handles the UI and interacts with the backend.
+- `mapbox-gl.css` - Styles for the Mapbox map.
+- `components/` - Contains reusable React components.
+
+### CI/CD
+- `.github/workflows/ci-cd.yml` - GitHub Actions workflow file that defines the CI/CD pipeline.
+
+---
+
+Happy Coding! 🚀
