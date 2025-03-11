@@ -128,11 +128,18 @@ Check the **GitHub Actions** tab in your repository to monitor the build and dep
 - `components/` - Contains reusable React components.
 
 ## Code Walkthrough
-- server.js
-fetchStaticData() 
-app.get('/healthcheck')
+- Server
+1) fetchStaticData() 
+2) app.get('/healthcheck')
+3) app.get('/api/flight-plans')
+4) app.get('/api/flight-plan/:callsign')
 
-
+- Client
+1) Fetch flight plans for dropdown list
+2) Filter flight plans based on search query
+3) Initialize map
+4) Update flight route when flight is selected
+5) Generative AI
 
 ### CI/CD
 - `.github/workflows/ci-cd.yml` - GitHub Actions workflow file that defines the CI/CD pipeline.

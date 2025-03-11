@@ -194,7 +194,7 @@ const App = () => {
     fetchRoute();
   }, [selectedFlight]);
 
-  // Auto-scroll the suggestions textarea
+  // 5) Generative AI
   useEffect(() => {
     if (suggestionsTextareaRef.current) {
       suggestionsTextareaRef.current.scrollTop = suggestionsTextareaRef.current.scrollHeight;
@@ -218,6 +218,94 @@ const App = () => {
           messages: [
             { role: 'system', content: 'You are a helpful assistant that provides suggestions to improve flight plans'},
             { role: 'user', content: `Here is the flight plan: ${JSON.stringify(flightPath)}. Can you provide a better flight waypoints? Be concise and only provide all the necessary waypoints, Remove waypoints that are strayed away from the flight path between first point and last point' ` }
+          ],
+          "temperature": 0.6,
+          stream: true, // Enable streaming
+        }),
+      });
+
+      // Check if the response is OK
+      if (!response.ok) {
+        throw new Error(`HTTP error! Status: ${response.status}`);
+      }
+
+      // Get the readable stream from the response body
+      const reader = response.body.getReader();
+      const decoder = new TextDecoder();
+      let accumulatedSuggestions = '';
+
+      // Read chunks from the stream
+      const readChunk = async () => {
+        const { done, value } = await reader.read();
+
+        if (done) {
+          console.log('Stream complete');
+          return;
+        }
+
+        // Decode the chunk
+        const chunk = decoder.decode(value, { stream: true });
+
+        // Process the chunk (handle SSE format)
+        const lines = chunk.split('\n'); // Split by newline to handle multiple events
+        for (const line of lines) {
+          if (line.startsWith('data:')) {
+            // Extract the JSON part (remove 'data:' prefix and trim whitespace)
+            const jsonStr = line.replace('data:', '').trim();
+
+            if (jsonStr === '[DONE]') {
+              // End of stream
+              console.log('Stream ended');
+              return;
+            }
+
+            try {
+              // Parse the JSON
+              const data = JSON.parse(jsonStr);
+
+              // Extract the content from the response
+              const content = data.choices[0]?.delta?.content || '';
+              // Append the content to the accumulated suggestions
+              accumulatedSuggestions += content;
+
+              // Update the suggestions state with the accumulated text
+              setSuggestions(accumulatedSuggestions);
+            } catch (error) {
+              console.error('Error parsing JSON:', error);
+            }
+          }
+        }
+
+        // Read the next chunk
+        readChunk();
+      };
+
+      // Start reading the stream
+      readChunk();
+
+    } catch (error) {
+      console.error('Error fetching suggestions:', error);
+      setSuggestions('Failed to fetch suggestions. Please try again later.');
+    }
+  };
+
+  const getInsights = async () => {
+    if (!flightPath) return;
+
+    try {
+      console.log("waypoints= " + JSON.stringify(flightPath));
+
+      // Send the prompt and waypoints to the server
+      const response = await fetch('http://localhost:1234/v1/chat/completions', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          model: 'meta-llama-3.1-8b-instruct',
+          messages: [
+            { role: 'system', content: 'You are a helpful assistant that provides insight to the flight plans'},
+            { role: 'user', content: `Here is the flight plan: ${JSON.stringify(flightPath)}. Can you provide a insights to the waypoints? Be concise and hightlights areas that may have danger` }
           ],
           "temperature": 0.6,
           stream: true, // Enable streaming
@@ -318,6 +406,7 @@ const App = () => {
 
       <div style={{ margin: '20px 0' }}>
         <button onClick={getSuggestions}>Get Suggestions</button>
+        <button onClick={getInsights}>Get Insights</button>
       </div>
 
       <div style={{ margin: '20px 0' }}>
