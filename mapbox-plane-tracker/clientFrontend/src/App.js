@@ -15,13 +15,14 @@ const App = () => {
   const [isMoving, setIsMoving] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [flightPath, setFlightPath] = useState(null);
+  const [suggestions, setSuggestions] = useState('');
 
-  // Fetch flight plans
+  // 1) Fetch flight plans for dropdown list
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const response = await axios.get('http://13.229.125.104:5000/api/flight-plans');
-        // const response = await axios.get('http://localhost:5001/api/flight-plans');
+        // const response = await axios.get('http://13.229.125.104:5000/api/flight-plans');
+        const response = await axios.get('http://localhost:5001/api/flight-plans');
         setFlightPlans(response.data);
         setFilteredFlightPlans(response.data);
       } catch (error) {
@@ -31,7 +32,7 @@ const App = () => {
     fetchData();
   }, []);
 
-  // Filter flight plans based on search query
+  // 2) Filter flight plans based on search query
   useEffect(() => {
     if (searchQuery) {
       const filtered = flightPlans.filter(flight =>
@@ -43,7 +44,7 @@ const App = () => {
     }
   }, [searchQuery, flightPlans]);
 
-  // Initialize map
+  // 3) Initialize map
   useEffect(() => {
     if (!mapRef.current) {
       const map = new mapboxgl.Map({
@@ -114,15 +115,15 @@ const App = () => {
     }
   }, []);
 
-  // Update map when flight is selected
+  // 4) Update map when flight is selected
   useEffect(() => {
     if (!mapRef.current || !selectedFlight) return;
 
     const fetchRoute = async () => {
       try {
         const response = await axios.get(
-          `http://13.229.125.104:5000/api/flight-plan/${selectedFlight}`
-          // `http://localhost:5001/api/flight-plan/${selectedFlight}`
+          // `http://13.229.125.104:5000/api/flight-plan/${selectedFlight}`
+          `http://localhost:5001/api/flight-plan/${selectedFlight}`
         );
         const { waypoints } = response.data;
 
@@ -182,9 +183,11 @@ const App = () => {
           .addTo(mapRef.current);
         markerRef.current = marker;
 
-        // Start animation
+        // Start animation - not in used.
         setIsMoving(true);
         setCurrentWaypointIndex(0);
+
+        getSuggestions(waypoints);
 
       } catch (error) {
         console.error('Error loading flight route:', error);
@@ -228,6 +231,33 @@ const App = () => {
 
   //   animate();
   // }, [currentWaypointIndex, isMoving, selectedFlight, flightPath]);
+  const getSuggestions = async (waypoints) => {
+    try {
+      console.log("waypoints= " + JSON.stringify(waypoints));
+      const response = await axios.post('http://172.20.10.3:1234/v1/chat/completions', {
+        model: 'deepseek-r1-distilled-7b-qwen',
+        messages: [
+          { role: 'system', content: 'You are a helpful assistant that provides suggestions to improve flight plans.' },
+          { role: 'user', content: `Here is the flight plan: ${JSON.stringify(waypoints)}. Can you provide a better flight route? Be concise not more than 100 words, only provide the waypoints` }
+        ],
+        stream: false
+      });
+  
+      // Extract the suggestions from the response
+      const suggestionsText = response.data.choices[0].message.content;
+
+      // Update the suggestions state
+      setSuggestions(suggestionsText);
+  
+      console.log("response=" + JSON.stringify(response.data));
+      console.log("suggestions state=", suggestions); // Debugging log
+
+    } catch (error) {
+      console.error('Error fetching suggestions:', error);
+      // Optionally, you can set an error message in the suggestions box
+      setSuggestions('Failed to fetch suggestions. Please try again later.');
+    }
+  };
 
   return (
     <div>
@@ -254,6 +284,18 @@ const App = () => {
             </option>
           ))}
         </select>
+      </div>
+
+      <div style={{ margin: '20px 0' }}>
+        <label>Suggestions: </label>
+        <textarea
+          id="suggestions"
+          rows="10"
+          cols="50"
+          readOnly
+          value={suggestions}
+          style={{ width: '100%' }}
+        />
       </div>
 
       <div id="map" style={{ width: '100%', height: '80vh' }} />
