@@ -16,12 +16,12 @@ const App = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [flightPath, setFlightPath] = useState(null);
   const [suggestions, setSuggestions] = useState('');
+  const suggestionsTextareaRef = useRef(null); // Ref for the suggestions textarea
 
   // 1) Fetch flight plans for dropdown list
   useEffect(() => {
     const fetchData = async () => {
       try {
-        // const response = await axios.get('http://13.229.125.104:5000/api/flight-plans');
         const response = await axios.get('http://localhost:5001/api/flight-plans');
         setFlightPlans(response.data);
         setFilteredFlightPlans(response.data);
@@ -122,7 +122,6 @@ const App = () => {
     const fetchRoute = async () => {
       try {
         const response = await axios.get(
-          // `http://13.229.125.104:5000/api/flight-plan/${selectedFlight}`
           `http://localhost:5001/api/flight-plan/${selectedFlight}`
         );
         const { waypoints } = response.data;
@@ -187,8 +186,6 @@ const App = () => {
         setIsMoving(true);
         setCurrentWaypointIndex(0);
 
-        getSuggestions(waypoints);
-
       } catch (error) {
         console.error('Error loading flight route:', error);
       }
@@ -197,44 +194,19 @@ const App = () => {
     fetchRoute();
   }, [selectedFlight]);
 
-  // // Animate plane movement
-  // useEffect(() => {
-  //   if (!isMoving || !selectedFlight || !markerRef.current || !flightPath) return;
+  // Auto-scroll the suggestions textarea
+  useEffect(() => {
+    if (suggestionsTextareaRef.current) {
+      suggestionsTextareaRef.current.scrollTop = suggestionsTextareaRef.current.scrollHeight;
+    }
+  }, [suggestions]); // Trigger auto-scroll when suggestions change
 
-  //   const animate = () => {
-  //     if (currentWaypointIndex >= flightPath.length - 1) {
-  //       setIsMoving(false);
-  //       return;
-  //     }
+  const getSuggestions = async () => {
+    if (!flightPath) return;
 
-  //     const start = flightPath[currentWaypointIndex];
-  //     const end = flightPath[currentWaypointIndex + 1];
-  //     const steps = 100;
-  //     let step = 0;
-
-  //     const interval = setInterval(() => {
-  //       if (step >= steps) {
-  //         clearInterval(interval);
-  //         setCurrentWaypointIndex(i => i + 1);
-  //         return;
-  //       }
-
-  //       const lng = start.longitude + 
-  //         (end.longitude - start.longitude) * (step / steps);
-  //       const lat = start.latitude + 
-  //         (end.latitude - start.latitude) * (step / steps);
-        
-  //       markerRef.current.setLngLat([lng, lat]);
-  //       step++;
-  //     }, 50);
-  //   };
-
-  //   animate();
-  // }, [currentWaypointIndex, isMoving, selectedFlight, flightPath]);
-  const getSuggestions = async (waypoints) => {
     try {
-      console.log("waypoints= " + JSON.stringify(waypoints));
-  
+      console.log("waypoints= " + JSON.stringify(flightPath));
+
       // Send the prompt and waypoints to the server
       const response = await fetch('http://172.20.10.3:1234/v1/chat/completions', {
         method: 'POST',
@@ -244,60 +216,62 @@ const App = () => {
         body: JSON.stringify({
           model: 'deepseek-r1-distilled-7b-qwen',
           messages: [
-            { role: 'system', content: 'You are a helpful assistant that provides suggestions to improve flight plans.' },
-            { role: 'user', content: `Here is the flight plan: ${JSON.stringify(waypoints)}. Can you provide a better flight route? Be concise not more than 100 words, only provide the waypoints` }
+            { role: 'system', content: 'You are a helpful assistant that provides suggestions to improve flight plans,'+ 
+              'keep the start aerodrome and end in end aerodrome.' +
+              ' Remove waypoints that are strayed away from the flight path between source and destination' },
+            { role: 'user', content: `Here is the flight plan: ${JSON.stringify(flightPath)}. Can you provide a better flight route? Be concise not more than 100 words, only provide the waypoints` }
           ],
           stream: true, // Enable streaming
         }),
       });
-  
+
       // Check if the response is OK
       if (!response.ok) {
         throw new Error(`HTTP error! Status: ${response.status}`);
       }
-  
+
       // Get the readable stream from the response body
       const reader = response.body.getReader();
       const decoder = new TextDecoder();
       let accumulatedSuggestions = '';
-  
+
       // Read chunks from the stream
       const readChunk = async () => {
         const { done, value } = await reader.read();
-  
+
         if (done) {
           console.log('Stream complete');
           return;
         }
-  
+
         // Decode the chunk
         const chunk = decoder.decode(value, { stream: true });
         console.log("Received chunk:", chunk);
-  
+
         // Process the chunk (handle SSE format)
         const lines = chunk.split('\n'); // Split by newline to handle multiple events
         for (const line of lines) {
           if (line.startsWith('data:')) {
             // Extract the JSON part (remove 'data:' prefix and trim whitespace)
             const jsonStr = line.replace('data:', '').trim();
-  
+
             if (jsonStr === '[DONE]') {
               // End of stream
               console.log('Stream ended');
               return;
             }
-  
+
             try {
               // Parse the JSON
               const data = JSON.parse(jsonStr);
-  
+
               // Extract the content from the response
               const content = data.choices[0]?.delta?.content || '';
               console.log("Extracted content:", content);
-  
+
               // Append the content to the accumulated suggestions
               accumulatedSuggestions += content;
-  
+
               // Update the suggestions state with the accumulated text
               setSuggestions(accumulatedSuggestions);
             } catch (error) {
@@ -305,14 +279,14 @@ const App = () => {
             }
           }
         }
-  
+
         // Read the next chunk
         readChunk();
       };
-  
+
       // Start reading the stream
       readChunk();
-  
+
     } catch (error) {
       console.error('Error fetching suggestions:', error);
       setSuggestions('Failed to fetch suggestions. Please try again later.');
@@ -347,8 +321,13 @@ const App = () => {
       </div>
 
       <div style={{ margin: '20px 0' }}>
+        <button onClick={getSuggestions}>Get Suggestions</button>
+      </div>
+
+      <div style={{ margin: '20px 0' }}>
         <label>Suggestions: </label>
         <textarea
+          ref={suggestionsTextareaRef} // Attach the ref to the textarea
           id="suggestions"
           rows="10"
           cols="50"
