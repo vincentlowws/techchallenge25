@@ -160,4 +160,13 @@ Check the **GitHub Actions** tab in your repository to monitor the build and dep
 ### Enhancement
 ![Enhancement Diagram](mapbox-plane-tracker/imageFolder/enhancement.png)
 
+Additional Observations
+1) API Key is used in GET, should use POST 
+2) There are missing fixes, such as PKP, TOPIR
+3) There are stray off points in the routes e.g. SIA 469 VCBI ---> WSSS, there is KAT
 
+https://flightplandatabase.com/plan/7777545
+![Screen1 Diagram](mapbox-plane-tracker/imageFolder/validate1.png)
+
+TechChallenge
+![Screen1 Diagram](mapbox-plane-tracker/imageFolder/validate2.png)
