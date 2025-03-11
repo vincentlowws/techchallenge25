@@ -220,6 +220,7 @@ const App = () => {
               ' Remove waypoints that are strayed away from the flight path between first point and last point'},
             { role: 'user', content: `Here is the flight plan: ${JSON.stringify(flightPath)}. Can you provide a better flight waypoints? Be concise not more than 100 words, only provide the waypoints, 'skip thinking process' ` }
           ],
+          "temperature": 0.6,
           stream: true, // Enable streaming
         }),
       });
