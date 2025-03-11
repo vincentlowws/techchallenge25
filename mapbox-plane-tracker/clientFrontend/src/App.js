@@ -107,7 +107,11 @@ const App = () => {
           id: 'aerodromes',
           type: 'circle',
           source: 'aerodromes',
-          paint: { 'circle-radius': 8, 'circle-color': '#FF0000' }
+          paint: {
+            'circle-radius': 6,
+            'circle-stroke-width': 2,
+            'circle-stroke-color': '#ffffff'
+          }
         });
       });
 
@@ -118,25 +122,22 @@ const App = () => {
   // 4) Update map when flight is selected
   useEffect(() => {
     if (!mapRef.current || !selectedFlight) return;
-
+  
     const fetchRoute = async () => {
       try {
         const response = await axios.get(
           `http://localhost:5001/api/flight-plan/${selectedFlight}`
         );
         const { waypoints } = response.data;
-
-        // Store flight path in state
+  
         setFlightPath(waypoints);
-
-        // Update route
+  
         const coordinates = waypoints.map(w => [w.longitude, w.latitude]);
         mapRef.current.getSource('route').setData({
           type: 'Feature',
           geometry: { type: 'LineString', coordinates }
         });
-
-        // Update waypoints
+  
         mapRef.current.getSource('waypoints').setData({
           type: 'FeatureCollection',
           features: waypoints.map(w => ({
@@ -145,8 +146,7 @@ const App = () => {
             properties: { id: w.id }
           }))
         });
-
-        // Update waypoint labels
+  
         mapRef.current.getSource('waypoint-labels').setData({
           type: 'FeatureCollection',
           features: waypoints.map(w => ({
@@ -155,42 +155,60 @@ const App = () => {
             properties: { id: w.id }
           }))
         });
-
-        // Highlight start and departure aerodromes
+  
+        // Update aerodrome markers
         const startAerodrome = waypoints[0];
         const departureAerodrome = waypoints[waypoints.length - 1];
+        
+        // Set aerodrome source data
         mapRef.current.getSource('aerodromes').setData({
           type: 'FeatureCollection',
           features: [
             {
               type: 'Feature',
-              geometry: { type: 'Point', coordinates: [startAerodrome.longitude, startAerodrome.latitude] },
-              properties: { id: 'Start' }
+              geometry: { 
+                type: 'Point', 
+                coordinates: [startAerodrome.longitude, startAerodrome.latitude] 
+              },
+              properties: { type: 'start' }
             },
             {
               type: 'Feature',
-              geometry: { type: 'Point', coordinates: [departureAerodrome.longitude, departureAerodrome.latitude] },
-              properties: { id: 'Departure' }
+              geometry: { 
+                type: 'Point', 
+                coordinates: [departureAerodrome.longitude, departureAerodrome.latitude] 
+              },
+              properties: { type: 'departure' }
             }
           ]
         });
-
-        // Add plane marker
-        if (markerRef.current) markerRef.current.remove();
-        const marker = new mapboxgl.Marker()
-          .setLngLat(coordinates[0])
-          .addTo(mapRef.current);
-        markerRef.current = marker;
-
-        // Start animation - not in used.
-        setIsMoving(true);
-        setCurrentWaypointIndex(0);
-
+  
+        // Update aerodrome layer styles
+        mapRef.current.setPaintProperty('aerodromes', 'circle-color', [
+          'match',
+          ['get', 'type'],
+          'start',
+          '#00ff00',  // Green
+          'departure',
+          '#ff0000',   // Red
+          '#000000'    // Default black
+        ]);
+  
+        // // Add plane marker
+        // if (markerRef.current) markerRef.current.remove();
+        // const marker = new mapboxgl.Marker()
+        //   .setLngLat(coordinates[0])
+        //   .addTo(mapRef.current);
+        // markerRef.current = marker;
+  
+        // setIsMoving(true);
+        // setCurrentWaypointIndex(0);
+  
       } catch (error) {
         console.error('Error loading flight route:', error);
       }
     };
-
+  
     fetchRoute();
   }, [selectedFlight]);
 
