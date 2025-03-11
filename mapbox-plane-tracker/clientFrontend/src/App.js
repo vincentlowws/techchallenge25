@@ -214,7 +214,7 @@ const App = () => {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          model: 'deepseek-r1-distilled-7b-qwen',
+          model: 'meta-llama-3.1-8b-instruct',
           messages: [
             { role: 'system', content: 'You are a helpful assistant that provides suggestions to improve flight plans'},
             { role: 'user', content: `Here is the flight plan: ${JSON.stringify(flightPath)}. Can you provide a better flight waypoints? Be concise and only provide all the necessary waypoints, Remove waypoints that are strayed away from the flight path between first point and last point' ` }
