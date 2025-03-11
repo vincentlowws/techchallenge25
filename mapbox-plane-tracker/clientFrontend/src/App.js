@@ -217,9 +217,8 @@ const App = () => {
           model: 'deepseek-r1-distilled-7b-qwen',
           messages: [
             { role: 'system', content: 'You are a helpful assistant that provides suggestions to improve flight plans,'+ 
-              'keep the start aerodrome and end in end aerodrome.' +
-              ' Remove waypoints that are strayed away from the flight path between source and destination' },
-            { role: 'user', content: `Here is the flight plan: ${JSON.stringify(flightPath)}. Can you provide a better flight route? Be concise not more than 100 words, only provide the waypoints` }
+              ' Remove waypoints that are strayed away from the flight path between first point and last point'},
+            { role: 'user', content: `Here is the flight plan: ${JSON.stringify(flightPath)}. Can you provide a better flight waypoints? Be concise not more than 100 words, only provide the waypoints, 'skip thinking process' ` }
           ],
           stream: true, // Enable streaming
         }),
@@ -246,7 +245,6 @@ const App = () => {
 
         // Decode the chunk
         const chunk = decoder.decode(value, { stream: true });
-        console.log("Received chunk:", chunk);
 
         // Process the chunk (handle SSE format)
         const lines = chunk.split('\n'); // Split by newline to handle multiple events
@@ -267,8 +265,6 @@ const App = () => {
 
               // Extract the content from the response
               const content = data.choices[0]?.delta?.content || '';
-              console.log("Extracted content:", content);
-
               // Append the content to the accumulated suggestions
               accumulatedSuggestions += content;
 
