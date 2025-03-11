@@ -17,8 +17,19 @@ The Flight Route Viewer is a web application that visualizes flight paths using 
 The application consists of the following components:
 
 ### Backend (Node.js/Express)
-- Fetches flight data from an external API.
-- Processes the data to extract waypoints and airways.
+- Fetches flight data from an external API. 
+![Backend Diagram 1](mapbox-plane-tracker/imageFolder/displayAll.png)
+
+- Fetches fixes (points's lat and lon)
+![Backend Diagram 2](mapbox-plane-tracker/imageFolder/fixes.png)
+- Processes the data to extract waypoints, airways, start and end aerodrome
+
+- Get the fixes in the airways
+![Backend Diagram 3](mapbox-plane-tracker/imageFolder/airway.png)
+
+- Get the fixes of the Aerodrome
+![Backend Diagram 4](mapbox-plane-tracker/imageFolder/airports.png)
+
 - Provides RESTful endpoints for the frontend to fetch flight plans and detailed flight routes.
 
 ### Frontend (React)
@@ -147,6 +158,6 @@ Check the **GitHub Actions** tab in your repository to monitor the build and dep
 ---
 
 ### Enhancement
-![CI/CD Diagram](mapbox-plane-tracker/imageFolder/enhancement.png)
+![Enhancement Diagram](mapbox-plane-tracker/imageFolder/enhancement.png)
 
 
