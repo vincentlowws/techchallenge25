@@ -7,6 +7,7 @@ The Flight Route Viewer is a web application that visualizes flight paths using 
 - **Flight Plan Search**: Search for flight plans by callsign.
 - **Flight Route Visualization**: Display the flight route on an interactive map with waypoints and airways.
 - **Dynamic Updates**: Automatically update the map when a new flight is selected.
+- **Generative AI**: Integrate with Self Hosted Large Language Model (LLM) - Tested with Llama 3.1 8B (Quantised) and Deepseek R1 7B QWen (distilled) to provide insights 
 - **CI/CD Pipeline**: Automated build, test, and deployment using GitHub Actions to AWS ECR and ECS.
 
 ## Architecture
@@ -23,7 +24,7 @@ The application consists of the following components:
 ### Frontend (React)
 - Displays the flight route on an interactive map using Mapbox.
 - Allows users to search for flight plans and select a flight to visualize its route.
-
+- Allows users to prompt Generative AI for insights such as alternate route, possible issue with flight path
 ## CI/CD Pipeline
 
 The CI/CD pipeline is managed using GitHub Actions:
@@ -75,6 +76,7 @@ npm install
 2. Create a `.env` file in the `client` directory with the following content:
    ```plaintext
    REACT_APP_MAPBOX_ACCESS_TOKEN=your_mapbox_access_token
+   REACT_APP_API_URL=http://server ip:port
    ```
 
 ### Run the Application
@@ -125,9 +127,19 @@ Check the **GitHub Actions** tab in your repository to monitor the build and dep
 - `mapbox-gl.css` - Styles for the Mapbox map.
 - `components/` - Contains reusable React components.
 
+## Code Walkthrough
+- server.js
+fetchStaticData() 
+app.get('/healthcheck')
+
+
+
 ### CI/CD
 - `.github/workflows/ci-cd.yml` - GitHub Actions workflow file that defines the CI/CD pipeline.
 
 ---
 
-Happy Coding! 🚀
+### Enhancement
+![CI/CD Diagram](mapbox-plane-tracker/imageFolder/enhancement.png)
+
+
