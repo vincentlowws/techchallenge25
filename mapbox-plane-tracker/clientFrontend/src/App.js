@@ -208,7 +208,7 @@ const App = () => {
       console.log("waypoints= " + JSON.stringify(flightPath));
 
       // Send the prompt and waypoints to the server
-      const response = await fetch('http://172.20.10.3:1234/v1/chat/completions', {
+      const response = await fetch('http://localhost:1234/v1/chat/completions', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
