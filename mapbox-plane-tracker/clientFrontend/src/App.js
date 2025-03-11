@@ -216,9 +216,8 @@ const App = () => {
         body: JSON.stringify({
           model: 'deepseek-r1-distilled-7b-qwen',
           messages: [
-            { role: 'system', content: 'You are a helpful assistant that provides suggestions to improve flight plans,'+ 
-              ' Remove waypoints that are strayed away from the flight path between first point and last point'},
-            { role: 'user', content: `Here is the flight plan: ${JSON.stringify(flightPath)}. Can you provide a better flight waypoints? Be concise not more than 100 words, only provide the waypoints, 'skip thinking process' ` }
+            { role: 'system', content: 'You are a helpful assistant that provides suggestions to improve flight plans'},
+            { role: 'user', content: `Here is the flight plan: ${JSON.stringify(flightPath)}. Can you provide a better flight waypoints? Be concise and only provide all the necessary waypoints, Remove waypoints that are strayed away from the flight path between first point and last point' ` }
           ],
           "temperature": 0.6,
           stream: true, // Enable streaming
