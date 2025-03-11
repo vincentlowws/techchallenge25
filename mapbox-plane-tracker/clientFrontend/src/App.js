@@ -234,27 +234,87 @@ const App = () => {
   const getSuggestions = async (waypoints) => {
     try {
       console.log("waypoints= " + JSON.stringify(waypoints));
-      const response = await axios.post('http://172.20.10.3:1234/v1/chat/completions', {
-        model: 'deepseek-r1-distilled-7b-qwen',
-        messages: [
-          { role: 'system', content: 'You are a helpful assistant that provides suggestions to improve flight plans.' },
-          { role: 'user', content: `Here is the flight plan: ${JSON.stringify(waypoints)}. Can you provide a better flight route? Be concise not more than 100 words, only provide the waypoints` }
-        ],
-        stream: false
+  
+      // Send the prompt and waypoints to the server
+      const response = await fetch('http://172.20.10.3:1234/v1/chat/completions', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          model: 'deepseek-r1-distilled-7b-qwen',
+          messages: [
+            { role: 'system', content: 'You are a helpful assistant that provides suggestions to improve flight plans.' },
+            { role: 'user', content: `Here is the flight plan: ${JSON.stringify(waypoints)}. Can you provide a better flight route? Be concise not more than 100 words, only provide the waypoints` }
+          ],
+          stream: true, // Enable streaming
+        }),
       });
   
-      // Extract the suggestions from the response
-      const suggestionsText = response.data.choices[0].message.content;
-
-      // Update the suggestions state
-      setSuggestions(suggestionsText);
+      // Check if the response is OK
+      if (!response.ok) {
+        throw new Error(`HTTP error! Status: ${response.status}`);
+      }
   
-      console.log("response=" + JSON.stringify(response.data));
-      console.log("suggestions state=", suggestions); // Debugging log
-
+      // Get the readable stream from the response body
+      const reader = response.body.getReader();
+      const decoder = new TextDecoder();
+      let accumulatedSuggestions = '';
+  
+      // Read chunks from the stream
+      const readChunk = async () => {
+        const { done, value } = await reader.read();
+  
+        if (done) {
+          console.log('Stream complete');
+          return;
+        }
+  
+        // Decode the chunk
+        const chunk = decoder.decode(value, { stream: true });
+        console.log("Received chunk:", chunk);
+  
+        // Process the chunk (handle SSE format)
+        const lines = chunk.split('\n'); // Split by newline to handle multiple events
+        for (const line of lines) {
+          if (line.startsWith('data:')) {
+            // Extract the JSON part (remove 'data:' prefix and trim whitespace)
+            const jsonStr = line.replace('data:', '').trim();
+  
+            if (jsonStr === '[DONE]') {
+              // End of stream
+              console.log('Stream ended');
+              return;
+            }
+  
+            try {
+              // Parse the JSON
+              const data = JSON.parse(jsonStr);
+  
+              // Extract the content from the response
+              const content = data.choices[0]?.delta?.content || '';
+              console.log("Extracted content:", content);
+  
+              // Append the content to the accumulated suggestions
+              accumulatedSuggestions += content;
+  
+              // Update the suggestions state with the accumulated text
+              setSuggestions(accumulatedSuggestions);
+            } catch (error) {
+              console.error('Error parsing JSON:', error);
+            }
+          }
+        }
+  
+        // Read the next chunk
+        readChunk();
+      };
+  
+      // Start reading the stream
+      readChunk();
+  
     } catch (error) {
       console.error('Error fetching suggestions:', error);
-      // Optionally, you can set an error message in the suggestions box
       setSuggestions('Failed to fetch suggestions. Please try again later.');
     }
   };
