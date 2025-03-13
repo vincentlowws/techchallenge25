@@ -76,7 +76,7 @@ describe('Server Endpoints', () => {
     });
 
     it('should return 404 for a non-existent flight plan', async () => {
-        const nonExistentCallsign = 'DAVIDLOH';
+        const nonExistentCallsign = 'CAAS89';
         const res = await request(app).get(`/api/flight-plan/${nonExistentCallsign}`);
         expect(res.statusCode).toEqual(404);
         expect(res.body).toHaveProperty('message', 'Flight not found');
