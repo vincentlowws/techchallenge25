@@ -4,6 +4,8 @@ import axios from 'axios';
 import 'mapbox-gl/dist/mapbox-gl.css';
 
 mapboxgl.accessToken = 'pk.eyJ1IjoidG5lY25pdiIsImEiOiJjbDI1eG9hZGUwMDd5M2xwd3poOGI4dG53In0.C9Mw9x7e-QpHpD5gOuQ2Eg';
+const SERVER="http://10.0.19.243:5001"
+const AISERVER="http://localhost:1234"
 
 const App = () => {
   const mapRef = useRef(null);
@@ -22,7 +24,7 @@ const App = () => {
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const response = await axios.get('http://localhost:5001/api/flight-plans');
+        const response = await axios.get(SERVER+"/api/flight-plans");
         setFlightPlans(response.data);
         setFilteredFlightPlans(response.data);
       } catch (error) {
@@ -125,9 +127,7 @@ const App = () => {
   
     const fetchRoute = async () => {
       try {
-        const response = await axios.get(
-          `http://localhost:5001/api/flight-plan/${selectedFlight}`
-        );
+        const response = await axios.get(SERVER+`/api/flight-plan/${selectedFlight}`);
         const { waypoints } = response.data;
   
         setFlightPath(waypoints);
@@ -226,7 +226,7 @@ const App = () => {
       console.log("waypoints= " + JSON.stringify(flightPath));
 
       // Send the prompt and waypoints to the server
-      const response = await fetch('http://localhost:1234/v1/chat/completions', {
+      const response = await fetch(AISERVER+'/v1/chat/completions', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -314,7 +314,7 @@ const App = () => {
       console.log("waypoints= " + JSON.stringify(flightPath));
 
       // Send the prompt and waypoints to the server
-      const response = await fetch('http://localhost:1234/v1/chat/completions', {
+      const response = await fetch(AISERVER+'/v1/chat/completions', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
