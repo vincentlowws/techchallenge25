@@ -5,6 +5,7 @@ import 'mapbox-gl/dist/mapbox-gl.css';
 
 mapboxgl.accessToken = 'pk.eyJ1IjoidG5lY25pdiIsImEiOiJjbDI1eG9hZGUwMDd5M2xwd3poOGI4dG53In0.C9Mw9x7e-QpHpD5gOuQ2Eg';
 const SERVER="http://10.0.19.243:5000"
+// const SERVER="http://localhost:5001"
 const AISERVER="http://localhost:1234"
 
 const App = () => {
