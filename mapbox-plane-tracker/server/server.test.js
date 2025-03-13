@@ -26,6 +26,55 @@ describe('Server Endpoints', () => {
         expect(res.body.every(flight => flight.aircraftIdentification.includes(callsign))).toBeTruthy();
     });
 
+    it('should filter flight plans by callsign', async () => {
+        const callsign = 'SAI469'; // Replace with a valid callsign for testing
+        const res = await request(app).get(`/api/flight-plans?callsign=${callsign}`);
+        expect(res.statusCode).toEqual(200);
+        expect(res.body.every(flight => flight.aircraftIdentification.includes(callsign))).toBeTruthy();
+    });
+
+    it('should filter flight plans by callsign', async () => {
+        const callsign = 'SIA951'; // Replace with a valid callsign for testing
+        const res = await request(app).get(`/api/flight-plans?callsign=${callsign}`);
+        expect(res.statusCode).toEqual(200);
+        expect(res.body.every(flight => flight.aircraftIdentification.includes(callsign))).toBeTruthy();
+    });
+
+    it('should filter flight plans by callsign', async () => {
+        const callsign = 'SIA7296'; // Replace with a valid callsign for testing
+        const res = await request(app).get(`/api/flight-plans?callsign=${callsign}`);
+        expect(res.statusCode).toEqual(200);
+        expect(res.body.every(flight => flight.aircraftIdentification.includes(callsign))).toBeTruthy();
+    });
+
+    it('should filter flight plans by callsign', async () => {
+        const callsign = 'SIA2'; // Replace with a valid callsign for testing
+        const res = await request(app).get(`/api/flight-plans?callsign=${callsign}`);
+        expect(res.statusCode).toEqual(200);
+        expect(res.body.every(flight => flight.aircraftIdentification.includes(callsign))).toBeTruthy();
+    });
+
+    it('should filter flight plans by callsign', async () => {
+        const callsign = 'SIA38'; // Replace with a valid callsign for testing
+        const res = await request(app).get(`/api/flight-plans?callsign=${callsign}`);
+        expect(res.statusCode).toEqual(200);
+        expect(res.body.every(flight => flight.aircraftIdentification.includes(callsign))).toBeTruthy();
+    });
+
+    it('should filter flight plans by callsign', async () => {
+        const callsign = 'SIA478'; // Replace with a valid callsign for testing
+        const res = await request(app).get(`/api/flight-plans?callsign=${callsign}`);
+        expect(res.statusCode).toEqual(200);
+        expect(res.body.every(flight => flight.aircraftIdentification.includes(callsign))).toBeTruthy();
+    });
+
+    it('should filter flight plans by callsign', async () => {
+        const callsign = 'SIA27'; // Replace with a valid callsign for testing
+        const res = await request(app).get(`/api/flight-plans?callsign=${callsign}`);
+        expect(res.statusCode).toEqual(200);
+        expect(res.body.every(flight => flight.aircraftIdentification.includes(callsign))).toBeTruthy();
+    });
+
     it('should return 404 for a non-existent flight plan', async () => {
         const nonExistentCallsign = 'DAVIDLOH';
         const res = await request(app).get(`/api/flight-plan/${nonExistentCallsign}`);
