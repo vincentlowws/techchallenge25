@@ -35,7 +35,15 @@ The application consists of the following components:
 ### Frontend (React)
 - Displays the flight route on an interactive map using Mapbox.
 - Allows users to search for flight plans and select a flight to visualize its route.
-- Allows users to prompt Generative AI for insights such as alternate route, possible issue with flight path
+- Allows users to prompt Generative AI for insights such as alternate route, possible issue with flight path.
+
+### Backend (Node.js)
+- Retrieve information from CAAS API.
+- Process retrieve information and repack for Client.
+
+![Class Diagram](mapbox-plane-tracker/imageFolder/ClassDiagram.png)
+![Sequence Diagram](mapbox-plane-tracker/imageFolder/SequenceDiagram.png)
+
 ## CI/CD Pipeline
 
 The CI/CD pipeline is managed using GitHub Actions:
